@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siderúrgica Perú | Especialistas en Acero</title>
+    <!-- Hoja de Estilos -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- BoxIcons para iconos -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+
+    <!-- 1 Navbar -->
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="#" class="nav-logo">
+                <i class='bx bx-hive'></i> Siderúrgica Perú
+            </a>
+            <ul class="nav-links">
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#nosotros">Nosotros</a></li>
+                <li><a href="#productos">Productos</a></li>
+                <li><a href="#servicios">Servicios</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
+            <!-- Botón hacia el ERP -->
+            <a href="login.html" class="btn-login" title="Acceso al sistema ERP interno">
+                <i class='bx bx-lock-alt'></i> Iniciar Sesión
+            </a>
+        </div>
+    </nav>
+
+    <!-- 2 Hero Section -->
+    <header id="inicio" class="hero" style="background-image: linear-gradient(rgba(26,54,93,0.85), rgba(45,55,72,0.85)), url('img/home.jpg');">
+        <div class="container hero-content">
+            <h1>Transformando el acero en pilar de crecimiento</h1>
+            <p>Líderes en distribución nacional de productos siderúrgicos y abastecimiento de materiales metálicos para grandes empresas y sector de la construcción.</p>
+            <div class="hero-actions">
+                <a href="#productos" class="btn btn-primary">Ver Productos</a>
+                <a href="#contacto" class="btn btn-outline">Cotizar Ahora <i class='bx bx-right-arrow-alt'></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 3 Sobre la Empresa -->
+    <section id="nosotros" class="section">
+        <div class="container about-grid">
+            <div class="about-text">
+                <span class="section-badge">Nuestra Empresa</span>
+                <h2>Sólidos como el acero, confiables por experiencia</h2>
+                <p>Somos un socio estratégico con amplia presencia en la comercialización de acero a nivel nacional. Nuestra vocación industrial nos permite abastecer de manera eficiente grandes volúmenes, garantizando que cada pieza cumpla con los estándares más estrictos del mercado.</p>
+                
+                <div class="mv-grid">
+                    <div class="mv-card">
+                        <i class='bx bx-target-lock'></i>
+                        <h4>Nuestra Misión</h4>
+                        <p>Brindar soluciones siderúrgicas integrales para optimizar la cadena productiva de la industria nacional.</p>
+                    </div>
+                    <div class="mv-card">
+                        <i class='bx bx-low-vision'></i>
+                        <h4>Nuestra Visión</h4>
+                        <p>Posicionarnos como el principal referente de distribución de acero certificado en eficiencia y servicio.</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <img src="img/empresa.jpg" alt="Instalaciones Siderúrgica" class="about-img" id="img-about">
+            </div>
+        </div>
+    </section>
+
+    <!-- 4 Productos Siderúrgicos -->
+    <section id="productos" class="section bg-light">
+        <div class="container">
+            <div class="text-center">
+                <span class="section-badge">Nuestro Catálogo</span>
+                <h2>Productos de Alta Resistencia</h2>
+            </div>
+            
+            <div class="product-grid">
+                <!-- Producto 1 -->
+                <div class="product-card">
+                    <img src="img/barras.jpg" alt="Barras de Acero" id="img-prod1">
+                    <div class="p-content">
+                        <h3>Barras de Acero Corrugado</h3>
+                        <p>Estructuras y armaduras de máxima adherencia, indispensables para la construcción civil.</p>
+                    </div>
+                </div>
+                <!-- Producto 2 -->
+                <div class="product-card">
+                    <img src="img/planchas.jpg" alt="Planchas Metálicas" id="img-prod2">
+                    <div class="p-content">
+                        <h3>Planchas Metálicas</h3>
+                        <p>Planchas lisas tipo LAF y LAC, diseñadas para la alta industria metalmecánica.</p>
+                    </div>
+                </div>
+                <!-- Producto 3 -->
+                <div class="product-card">
+                    <img src="img/tubos.jpg" alt="Tubos Estructurales" id="img-prod3">
+                    <div class="p-content">
+                        <h3>Tubos Estructurales</h3>
+                        <p>Variedad de tubos rectangulares, cuadrados y circulares de alta duración.</p>
+                    </div>
+                </div>
+                <!-- Producto 4 -->
+                <div class="product-card">
+                    <img src="img/perfiles.jpg" alt="Perfiles Metálicos" id="img-prod4">
+                    <div class="p-content">
+                        <h3>Perfiles Estructurales</h3>
+                        <p>Vigas formato H, U e I para soportar grandes estructuras metálicas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5 Servicios -->
+    <section id="servicios" class="section">
+        <div class="container text-center">
+            <span class="section-badge">Lo que nos diferencia</span>
+            <h2>Servicios Especializados</h2>
+            
+            <div class="service-grid">
+                <div class="service-box">
+                    <i class='bx bx-calculator'></i>
+                    <h4>Cotizaciones Rápidas</h4>
+                    <p>Equipo dedicado para responder requerimientos y licitaciones en tiempo récord.</p>
+                </div>
+                <div class="service-box">
+                    <i class='bx bx-map-alt'></i>
+                    <h4>Distribución Nacional</h4>
+                    <p>Llegamos a todas las plantas y obras en todo el territorio con logística blindada.</p>
+                </div>
+                <div class="service-box">
+                    <i class='bx bx-book-reader'></i>
+                    <h4>Asesoría Técnica</h4>
+                    <p>Expertos en metalurgia disponibles para recomendar la mejor aleación para su proyecto.</p>
+                </div>
+                <div class="service-box">
+                    <i class='bx bx-timer'></i>
+                    <h4>Despacho Eficiente</h4>
+                    <p>Entregas programadas tipo Just-In-Time a través de nuestra red logística.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6 Ventajas Competitivas (Stats) -->
+    <section class="section bg-primary">
+        <div class="container stats-grid">
+            <div class="stat-box">
+                <h3>+2,000</h3>
+                <p>Clientes Satisfechos</p>
+            </div>
+            <div class="stat-box">
+                <h3>24hrs</h3>
+                <p>Rapidez Logística</p>
+            </div>
+            <div class="stat-box">
+                <h3>100%</h3>
+                <p>Control de Stock</p>
+            </div>
+            <div class="stat-box">
+                <h3>ISO</h3>
+                <p>Calidad Certificada</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7 Proceso de Compra -->
+    <section class="section bg-light text-center">
+        <div class="container">
+            <h2>Gestión Ágil y Segura</h2>
+            <p style="color: var(--c-steel); max-width: 600px; margin: 0 auto;">Nuestro flujo de atención empresarial está diseñado para que tu industria no se detenga.</p>
+            
+            <div class="process-wrapper">
+                <div class="process-step">
+                    <i class='bx bx-file'></i>
+                    <span>1. Solicitud de<br>Cotización</span>
+                </div>
+                <i class='bx bx-chevron-right process-arrow'></i>
+                
+                <div class="process-step">
+                    <i class='bx bx-calculator'></i>
+                    <span>2. Cotización y<br>Aprobación</span>
+                </div>
+                <i class='bx bx-chevron-right process-arrow'></i>
+                
+                <div class="process-step">
+                    <i class='bx bx-receipt'></i>
+                    <span>3. Registro de<br>Pedido</span>
+                </div>
+                <i class='bx bx-chevron-right process-arrow'></i>
+
+                <div class="process-step">
+                    <i class='bx bx-cog'></i>
+                    <span>4. Facturación<br>Interna</span>
+                </div>
+                <i class='bx bx-chevron-right process-arrow'></i>
+
+                <div class="process-step">
+                    <i class='bx bx-truck'></i>
+                    <span>5. Envío y<br>Despacho</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8 Contacto -->
+    <section id="contacto" class="section">
+        <div class="container text-center" style="margin-bottom: 40px;">
+            <span class="section-badge">Hablemos</span>
+            <h2>Contacto Corporativo</h2>
+        </div>
+        
+        <div class="container contact-grid">
+            <!-- Información Izquierda -->
+            <div class="contact-info">
+                <h3>Sede Principal</h3>
+                <p style="color: var(--c-steel); margin-bottom: 30px;">Comunícate con nuestros asesores comerciales para cotizaciones por volumen y apertura de líneas logísticas empresariales.</p>
+                
+                <div class="c-item">
+                    <i class='bx bx-map'></i>
+                    <div class="c-text">
+                        <h4>Dirección Industrial</h4>
+                        <p>Av. Evitamiento 1450, Parque Industrial.</p>
+                    </div>
+                </div>
+                <div class="c-item">
+                    <i class='bx bx-phone'></i>
+                    <div class="c-text">
+                        <h4>Teléfono Directo</h4>
+                        <p>+51 01 455-8020 / +51 987 654 321</p>
+                    </div>
+                </div>
+                <div class="c-item">
+                    <i class='bx bx-envelope'></i>
+                    <div class="c-text">
+                        <h4>Correo Corporativo</h4>
+                        <p>ventas@siderurgicaperu.com.pe</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Formulario Derecha -->
+            <div class="contact-form">
+                <form action="#">
+                    <div class="form-group">
+                        <label>Razón Social o Empresa</label>
+                        <input type="text" class="form-control" placeholder="Nombre comercial de la empresa">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label>Teléfono de Contacto</label>
+                            <input type="text" class="form-control" placeholder="Opcional">
+                        </div>
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" class="form-control" placeholder="correo@empresa.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Detalle del Requerimiento</label>
+                        <textarea class="form-control" placeholder="Especifique el tonelaje, tipos de perfiles u otras consultas..."></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" style="width: 100%; justify-content: center;">Enviar Consulta Corporativa</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9 Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="f-col" style="grid-column: span 2;">
+                    <a href="#" class="nav-logo" style="margin-bottom: 16px;">
+                        <i class='bx bx-hive'></i> Siderúrgica Perú
+                    </a>
+                    <p>Socios estratégicos del sector construcción y metalmecánico. Entregamos acero de verdad, en el tiempo correcto y con las certificaciones necesarias.</p>
+                    <div class="f-socials">
+                        <a href="#"><i class='bx bxl-linkedin'></i></a>
+                        <a href="#"><i class='bx bxl-facebook'></i></a>
+                        <a href="#"><i class='bx bxl-twitter'></i></a>
+                    </div>
+                </div>
+                
+                <div class="f-col">
+                    <h4>Enlaces Rápidos</h4>
+                    <ul class="f-links">
+                        <li><a href="#nosotros">Sobre la Empresa</a></li>
+                        <li><a href="#productos">Catálogo de Acero</a></li>
+                        <li><a href="#servicios">Servicios B2B</a></li>
+                        <li><a href="#contacto">Contacto Comercial</a></li>
+                    </ul>
+                </div>
+
+                <div class="f-col">
+                    <h4>Soporte y Accesos</h4>
+                    <ul class="f-links">
+                        <li><a href="#">Políticas de Privacidad</a></li>
+                        <li><a href="#">Términos y Condiciones</a></li>
+                        <li><a href="#">Bolsa de Trabajo</a></li>
+                        <!-- Enlance ERP -->
+                        <li style="margin-top: 16px;">
+                            <a href="login.html" style="color: #63B3ED; font-weight: 600;">
+                                <i class='bx bx-lock-alt'></i> Acceso Empleados (ERP)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                &copy; 2026 Siderúrgica Perú S.A.C. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
