@@ -507,41 +507,55 @@ td {
   transition: all 0.15s;
   &:hover { background: #38A169; color: white; border-color: #38A169; }
 }
-
 /* ── Estado Dropdown ── */
 .estado-dropdown {
   position: relative;
   display: inline-block;
-
-  &:hover .estado-menu {
-    display: block;
-  }
 }
 
 .estado-menu {
   display: none;
   position: absolute;
-  top: calc(100% + 4px);
+  top: 28px;
   left: 0;
-  background: white;
+  min-width: 150px;
+  background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  z-index: 100;
-  min-width: 160px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+  z-index: 99999;
   overflow: hidden;
-
-  div {
-    padding: 9px 14px;
-    font-size: 13px;
-    color: #2D3748;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.1s;
-    &:hover { background: #EBF8FF; color: #1A365D; }
-  }
 }
 
+.estado-dropdown:hover .estado-menu {
+  display: block;
+}
+
+.estado-menu div {
+  padding: 10px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #2D3748;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+
+.estado-menu div:hover {
+  background: #EBF8FF;
+  color: #1A365D;
+}
+
+/* Evitar que la tabla corte el menú */
+.table-card {
+  overflow: visible !important;
+}
+
+table,
+tbody,
+tr,
+td {
+  overflow: visible !important;
+}
 /* ── Modal Overlay ── */
 .modal-overlay {
   position: fixed;

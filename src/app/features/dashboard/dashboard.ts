@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { CotizacionService, Cotizacion } from '../../core/services/cotizacion.service';
+//import { error } from 'node:console';
 
 // ─── INTERFACES ────────────────────────────────────────────────────────────────
 
@@ -104,6 +106,7 @@ export class DashboardComponent implements OnInit {
     ADMIN: [
       'dashboard',
       'ventas',
+      'cotizaciones',
       'despacho',
       'inventario',
       'abastecimiento',
@@ -117,6 +120,7 @@ export class DashboardComponent implements OnInit {
     VENTAS: [
       'dashboard',
       'ventas',
+      'cotizaciones',
       'reportes'
     ],
 
@@ -136,7 +140,8 @@ export class DashboardComponent implements OnInit {
 
     CONSULTA: [
       'dashboard',
-      'reportes'
+      'reportes',
+      'cotizaciones'
     ]
   };
 
@@ -157,6 +162,10 @@ export class DashboardComponent implements OnInit {
   ventaFiltroEstado = '';
   ventaFiltroPeriodo = '';
 
+  cotizacionSearch ='';
+  cotizacionFiltroEstado = '';
+  loadingCotizaciones = false;
+
   inventarioSearch = '';
   inventarioFiltroCategoria = '';
   inventarioFiltroEstado = '';
@@ -175,6 +184,10 @@ export class DashboardComponent implements OnInit {
   // ── Form Models ──
   ventaForm: Partial<Venta> = {};
   productoForm: Partial<Producto> = {};
+  cotizacionForm: Partial<Cotizacion> ={
+    cantidad: 1,
+    precio_unitario: 0
+  };
   despachoForm: Partial<Despacho> = {};
   ordenForm: Partial<OrdenCompra> = {};
   proveedorForm: Partial<Proveedor> = {};
@@ -190,6 +203,9 @@ export class DashboardComponent implements OnInit {
     { id: '#PED-2844', cliente: 'Grupo Constructor Norte', ruc: '20612345671', producto: 'Planchas 6mm', cantidad: '8 TM', total: 15800, vendedor: 'J. Ramírez', estado: 'En revisión', fecha: 'Ayer, 18:20' },
     { id: '#PED-2843', cliente: 'Desarrollos Urbanos Perú', ruc: '20712345672', producto: 'Alambre galvanizado #16', cantidad: '3 TM', total: 8300, vendedor: 'M. Torres', estado: 'Rechazado', fecha: 'Ayer, 16:45' },
   ];
+
+  // ── Datos: COTIZACIONES ──
+  cotizaciones: Cotizacion[] = [];
 
   // ── Datos: INVENTARIO ──
   productos: Producto[] = [
@@ -245,12 +261,17 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private cotizacionService: CotizacionService
   ) {}
 
   ngOnInit() {
     this.usuarioActual = this.authService.getUser();
     this.rolActual = this.authService.getRol();
+
+    if(this.puedeVer('cotizaciones')){
+      this.cargarCotizaciones();
+    }
   }
 
   puedeVer(view: string): boolean{
@@ -266,8 +287,13 @@ export class DashboardComponent implements OnInit {
   // ─── NAVEGACIÓN ────────────────────────────────────────────────────────────
 
   showView(view: string) {
-    if(this.puedeVer(view)){
+    if (this.puedeVer(view)) {
       this.activeView = view;
+
+      if (view === 'cotizaciones') {
+        this.cargarCotizaciones();
+      }
+
       this.closeModal();
     }
   }
@@ -279,6 +305,7 @@ export class DashboardComponent implements OnInit {
       proveedores: 'Gestión de Proveedores', rrhh: 'Gestión de Recursos Humanos',
       planillas: 'Gestión de Planillas', reportes: 'Gestión de Reportes',
       mantenimiento: 'Mantenimiento del Sistema',
+      cotizaciones: 'Gestión de Cotizaciones',
     };
     return titles[this.activeView] || '';
   }
@@ -291,6 +318,7 @@ export class DashboardComponent implements OnInit {
       rrhh: 'Control de asistencia y personal', planillas: 'Gestión salarial — Julio 2025',
       reportes: 'Indicadores clave del negocio',
       mantenimiento:'Administración de usuarios, roles y configuración',
+      cotizaciones:'Registro, cálculo automático y consulta de cotizaciones comerciales',
     };
     return subs[this.activeView] || '';
   }
@@ -322,6 +350,7 @@ export class DashboardComponent implements OnInit {
       orden: { crear: 'Nueva Orden de Compra', editar: 'Editar Orden', ver: 'Detalle de Orden' },
       proveedor: { crear: 'Nuevo Proveedor', editar: 'Editar Proveedor', ver: 'Detalle de Proveedor' },
       empleado: { crear: 'Nuevo Empleado', editar: 'Editar Empleado', ver: 'Detalle de Empleado' },
+      cotizacion: { crear: 'Nueva Cotización',editar: 'Editar Cotización', ver: 'Detalle de Cotización'},
     };
     this.modalTitle = titles[tipo]?.[mode] || '';
 
@@ -331,6 +360,7 @@ export class DashboardComponent implements OnInit {
     if (tipo === 'orden') this.ordenForm = data ? { ...data } : { estado: 'Pendiente' };
     if (tipo === 'proveedor') this.proveedorForm = data ? { ...data } : { estado: 'Activo', calificacion: 4.0 };
     if (tipo === 'empleado') this.empleadoForm = data ? { ...data } : { asistencia: 'Presente' };
+    if (tipo === 'cotizacion') this.cotizacionForm = data ? { ...data} : { cantidad: 1, precio_unitario: 0};
   }
 
   closeModal() {
@@ -343,12 +373,89 @@ export class DashboardComponent implements OnInit {
 
   guardar() {
     if (this.modalTipo === 'venta') this.guardarVenta();
+    else if (this.modalTipo === 'cotizacion') this.guardarCotizacion();
     else if (this.modalTipo === 'producto') this.guardarProducto();
     else if (this.modalTipo === 'despacho') this.guardarDespacho();
     else if (this.modalTipo === 'orden') this.guardarOrden();
     else if (this.modalTipo === 'proveedor') this.guardarProveedor();
     else if (this.modalTipo === 'empleado') this.guardarEmpleado();
   }
+
+  cargarCotizaciones(){
+    this.loadingCotizaciones = true;
+
+    this.cotizacionService.listarCotizaciones().subscribe({
+      next: (data) => {
+        console.log('Cotizaciones cargadas:',data);
+        this.cotizaciones = data;
+        this.loadingCotizaciones = false;
+      },
+      error: (err: any) =>{
+        console.error('Error al cargar cotizaciones:',err)
+        this.loadingCotizaciones = false;
+        this.showToast('Error al cargar cotizaciones', 'error');
+      },
+      complete: () =>{
+        this.loadingCotizaciones = false;
+      }
+    });
+  }
+
+  guardarCotizacion(){
+    if(!this.cotizacionForm.cliente || !this.cotizacionForm.producto){
+      this.showToast('Complete cliente y producto', 'error');
+      return;
+    }
+
+    if(!this.cotizacionForm.cantidad || !this.cotizacionForm.precio_unitario){
+      this.showToast('Complete cantidad y precio unitario', 'error');
+      return;
+    }
+    const nuevaCotizacion: Cotizacion = {
+    cliente: this.cotizacionForm.cliente!,
+    ruc: this.cotizacionForm.ruc  || '',
+    producto: this.cotizacionForm.producto!,
+    cantidad: Number(this.cotizacionForm.cantidad),
+    precio_unitario: Number(this.cotizacionForm.precio_unitario),
+    usuario_id: this.usuarioActual?.id || null
+    };
+
+    this.cotizacionService.registrarCotizacion(nuevaCotizacion).subscribe({
+      next: (response) => {
+        console.log('Cotizaciín registrada:',response);
+        this.showToast('Cotización registrada correctamente');
+        this.closeModal();
+        this.cargarCotizaciones();
+      },
+      error: (err: any) => {
+        console.error('Error completo al registrar cotización:',err);
+        this.showToast(err.error?.mensaje || 'Error al registrar cotización','error');
+
+        this.cargarCotizaciones();
+      }
+    });
+  }
+  puedeRegistrarCotizacion(): boolean {
+    return this.rolActual === 'ADMIN' || this.rolActual === 'VENTAS'; 
+  }
+  cambiarEstadoCotizacion(cotizacion: Cotizacion, estado: string) {
+    if (!cotizacion.id) {
+      this.showToast('Cotización no válida', 'error');
+      return;
+    }
+
+    this.cotizacionService.actualizarEstado(cotizacion.id, estado).subscribe({
+      next: (response) => {
+        cotizacion.estado = response.cotizacion.estado;
+        this.showToast(`Cotización ${cotizacion.codigo} actualizada a ${estado}`);
+        this.cargarCotizaciones();
+      },
+      error: (err: any) => {
+        console.error('Error al cambiar estado de cotización:', err);
+        this.showToast(err.error?.mensaje || 'Error al cambiar estado', 'error');
+      }
+    });
+}
 
   guardarVenta() {
     if (!this.ventaForm.cliente || !this.ventaForm.producto) {
@@ -545,6 +652,22 @@ export class DashboardComponent implements OnInit {
 
   // ─── FILTROS ───────────────────────────────────────────────────────────────
 
+  get cotizacionesFiltradas(): Cotizacion[]{
+    return this.cotizaciones.filter(c => {
+      const search = this.cotizacionSearch.toLowerCase();
+
+      const matchSearch = !this.cotizacionSearch ||
+        c.codigo?.toLowerCase().includes(search) ||
+        c.cliente?.toLowerCase().includes(search) ||
+        c.producto?.toLowerCase().includes(search) ||
+        c.ruc?.toLowerCase().includes(search);
+      
+      const matchEstado = !this.cotizacionFiltroEstado || c.estado === this.cotizacionFiltroEstado;
+
+      return matchSearch && matchEstado;
+    });
+  }
+
   get ventasFiltradas(): Venta[] {
     return this.ventas.filter(v => {
       const matchSearch = !this.ventaSearch ||
@@ -629,13 +752,24 @@ export class DashboardComponent implements OnInit {
       'Activo': 'badge-green', 'Presente': 'badge-green', 'Normal': 'badge-green', 'Aprobada': 'badge-green',
       'Pendiente': 'badge-orange', 'Tardanza': 'badge-yellow', 'En revisión': 'badge-yellow', 'Bajo': 'badge-yellow',
       'Rechazado': 'badge-red', 'Ausente': 'badge-red', 'Sin stock': 'badge-red', 'Bajo stock': 'badge-red',
-      'Enviado': 'badge-blue', 'En tránsito': 'badge-blue', 'Inactivo': 'badge-red',
+      'Enviado': 'badge-blue', 'En tránsito': 'badge-blue', 'Inactivo': 'badge-red', 'PENDIENTE': 'badge-orange', 'APROBADO' : 'badge-green',
+      'RECHAZADA' : 'badge-red',
     };
     return map[estado] || 'badge-yellow';
   }
 
   getTotalNeto(p: Planilla): number {
     return p.salarioBase - p.descuentos + p.bonos;
+  }
+
+  getCotizacionesPendientes(): number {
+    return this.cotizaciones.filter(c => c.estado === 'PENDIENTE').length;
+  }
+
+  getTotalCotizado(): number {
+    return this.cotizaciones.reduce((s, c) => {
+      return s + Number(c.total || 0);
+    }, 0);
   }
 
   formatMoney(n: number): string {

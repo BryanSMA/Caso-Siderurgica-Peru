@@ -24,12 +24,23 @@
           <span>Dashboard</span>
         </div>
       </div>
-      <div class="nav-section" *ngIf="puedeVerAlguno(['ventas','despacho'])">
+      <div class="nav-section" *ngIf="puedeVerAlguno(['ventas','cotizaciones','despacho'])">
         <div class="nav-section-label">Comercial</div>
         <div class="nav-item" *ngIf="puedeVer('ventas')" [class.active]="activeView === 'ventas'" (click)="showView('ventas')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <span>Gestión de Ventas</span>
           <span class="nav-badge">{{ ventas.length }}</span>
+        </div>
+        <div class="nav-item" *ngIf="puedeVer('cotizaciones')" [class.active]="activeView === 'cotizaciones'" (click)="showView('cotizaciones')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <line x1="10" y1="9" x2="8" y2="9"/>
+          </svg>
+          <span>Gestión de Cotizaciones</span>
+          <span class="nav-badge">{{ cotizaciones.length }}</span>
         </div>
         <div class="nav-item" *ngIf="puedeVer('despacho')" [class.active]="activeView === 'despacho'" (click)="showView('despacho')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -317,7 +328,121 @@
           </table>
         </div>
       </div>
+      <!-- ═══════════════════════════════════════════════════════ COTIZACIONES -->
+      <div *ngIf="activeView === 'cotizaciones'">
+        <div class="page-header">
+          <div class="page-header-left">
+            <h2>Gestión de Cotizaciones</h2>
+            <p>Registro, cálculo automático de descuentos y consulta de cotizaciones</p>
+          </div>
+          <div class="page-header-right">
+            <button class="btn btn-secondary" (click)="cargarCotizaciones()">Actualizar</button>
+            <button class="btn btn-primary" *ngIf="puedeRegistrarCotizacion()" (click)="openModal('cotizacion','crear')">
+              + Nueva Cotización
+            </button>
+          </div>
+        </div>
 
+        <div class="summary-strip">
+          <div class="summary-item">
+            <div class="val">{{ cotizaciones.length }}</div>
+            <div class="lbl">Cotizaciones Registradas</div>
+          </div>
+          <div class="summary-item">
+            <div class="val" style="color:#DD6B20">
+              {{ getCotizacionesPendientes() }}
+            </div>
+            <div class="lbl">Pendientes</div>
+          </div>
+          <div class="summary-item">
+            <div class="val" style="color:#38A169">
+              {{ formatMoney(getTotalCotizado()) }}
+            </div>
+            <div class="lbl">Valor Total Cotizado</div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="filters-row">
+            <div class="search-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" placeholder="Buscar por código, cliente, RUC o producto..." [(ngModel)]="cotizacionSearch">
+            </div>
+
+            <select class="filter-select" [(ngModel)]="cotizacionFiltroEstado">
+              <option value="">Todos los estados</option>
+              <option value="PENDIENTE">PENDIENTE</option>
+              <option value="APROBADA">APROBADA</option>
+              <option value="RECHAZADA">RECHAZADA</option>
+            </select>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Cliente</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+                <th>Descuento</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Vendedor</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let c of cotizacionesFiltradas">
+                <td><strong>{{ c.codigo }}</strong></td>
+                <td>
+                  <div class="td-main">{{ c.cliente }}</div>
+                  <div class="td-sub">RUC: {{ c.ruc || '—' }}</div>
+                </td>
+                <td>{{ c.producto }}</td>
+                <td>{{ c.cantidad }}</td>
+                <td>{{ formatMoney(+c.subtotal!) }}</td>
+                <td>
+                  {{ c.descuento_porcentaje }}%
+                  <div class="td-sub">{{ formatMoney(+c.descuento_monto!) }}</div>
+                </td>
+                <td><strong>{{ formatMoney(+c.total!) }}</strong></td>
+                <td>
+                  <div class="estado-dropdown">
+                    <span class="badge" [class]="getBadgeClass(c.estado || '')" style="cursor:pointer">
+                      {{ c.estado }} ▾
+                    </span>
+
+                    <div class="estado-menu" *ngIf="puedeRegistrarCotizacion()">
+                      <div (click)="cambiarEstadoCotizacion(c, 'PENDIENTE')">⏳ PENDIENTE</div>
+                      <div (click)="cambiarEstadoCotizacion(c, 'APROBADA')">✓ APROBADA</div>
+                      <div (click)="cambiarEstadoCotizacion(c, 'RECHAZADA')">✕ RECHAZADA</div>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ c.vendedor || '—' }}</td>
+                <td>
+                  <div class="action-col">
+                    <button class="btn btn-ghost btn-sm" (click)="openModal('cotizacion','ver',c)">Ver</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr *ngIf="!loadingCotizaciones && cotizacionesFiltradas.length === 0">
+                <td colspan="10" class="empty-row">No se encontraron cotizaciones</td>
+              </tr>
+
+              <tr *ngIf="loadingCotizaciones && cotizacionesFiltradas.length ===0 ">
+                <td colspan="10" class="empty-row">Cargando cotizaciones...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
       <!-- ═══════════════════════════════════════════════════════ INVENTARIO -->
       <div *ngIf="activeView === 'inventario'">
         <div class="page-header">
@@ -866,6 +991,112 @@
         </div>
       </div>
 
+      <!-- ── FORM: COTIZACIÓN ── -->
+      <div *ngIf="modalTipo === 'cotizacion' && modalMode !== 'ver'" class="modal-body">
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Cliente *</label>
+            <input type="text" [(ngModel)]="cotizacionForm.cliente" placeholder="Nombre del cliente">
+          </div>
+
+          <div class="form-field">
+            <label>RUC</label>
+            <input type="text" [(ngModel)]="cotizacionForm.ruc" placeholder="20XXXXXXXXX">
+          </div>
+
+          <div class="form-field full">
+            <label>Producto *</label>
+            <input type="text" [(ngModel)]="cotizacionForm.producto" placeholder="Ej: Plancha de acero">
+          </div>
+
+          <div class="form-field">
+            <label>Cantidad *</label>
+            <input type="number" [(ngModel)]="cotizacionForm.cantidad" placeholder="0">
+          </div>
+
+          <div class="form-field">
+            <label>Precio Unitario (S/) *</label>
+            <input type="number" [(ngModel)]="cotizacionForm.precio_unitario" placeholder="0.00">
+          </div>
+
+          <div class="form-field full">
+            <label>Regla de descuento automática</label>
+            <div class="td-sub">
+              10 a 49 unidades: 5% | 50 a 99 unidades: 7% | 100 a más: 10%
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" (click)="guardar()">Registrar Cotización</button>
+        </div>
+      </div>
+      <!-- ── VER COTIZACIÓN ── -->
+      <div *ngIf="modalTipo === 'cotizacion' && modalMode === 'ver'" class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">Código</div>
+            <div class="detail-val">{{ cotizacionForm.codigo }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Cliente</div>
+            <div class="detail-val">{{ cotizacionForm.cliente }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">RUC</div>
+            <div class="detail-val">{{ cotizacionForm.ruc || '—' }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Producto</div>
+            <div class="detail-val">{{ cotizacionForm.producto }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Cantidad</div>
+            <div class="detail-val">{{ cotizacionForm.cantidad }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Precio Unitario</div>
+            <div class="detail-val">{{ formatMoney(+cotizacionForm.precio_unitario!) }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Subtotal</div>
+            <div class="detail-val">{{ formatMoney(+cotizacionForm.subtotal!) }}</div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Descuento</div>
+            <div class="detail-val">
+              {{ cotizacionForm.descuento_porcentaje }}% -
+              {{ formatMoney(+cotizacionForm.descuento_monto!) }}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Total</div>
+            <div class="detail-val"><strong>{{ formatMoney(+cotizacionForm.total!) }}</strong></div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Estado</div>
+            <div class="detail-val">
+              <span class="badge" [class]="getBadgeClass(cotizacionForm.estado || '')">
+                {{ cotizacionForm.estado }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
+        </div>
+      </div>
       <!-- ── FORM: PRODUCTO ── -->
       <div *ngIf="modalTipo === 'producto'" class="modal-body">
         <div class="form-grid">
