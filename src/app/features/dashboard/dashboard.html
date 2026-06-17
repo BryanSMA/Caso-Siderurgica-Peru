@@ -19,17 +19,17 @@
     <nav class="sidebar-nav">
       <div class="nav-section" *ngIf="puedeVer('dashboard')">
         <div class="nav-section-label">General</div>
-        <div class="nav-item" *ngIf="puedeVer('dashboard')" [class.active]="activeView === 'dashboard'" (click)="showView('dashboard')">
+        <div class="nav-item" [class.active]="activeView === 'dashboard'" (click)="showView('dashboard')">
           <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           <span>Dashboard</span>
         </div>
       </div>
-      <div class="nav-section" *ngIf="puedeVerAlguno(['ventas','cotizaciones','despacho'])">
+
+      <div class="nav-section" *ngIf="puedeVerAlguno(['ventas','cotizaciones','pedidos','despacho'])">
         <div class="nav-section-label">Comercial</div>
         <div class="nav-item" *ngIf="puedeVer('ventas')" [class.active]="activeView === 'ventas'" (click)="showView('ventas')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <span>Gestión de Ventas</span>
-          <span class="nav-badge">{{ ventas.length }}</span>
         </div>
         <div class="nav-item" *ngIf="puedeVer('cotizaciones')" [class.active]="activeView === 'cotizaciones'" (click)="showView('cotizaciones')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -40,14 +40,20 @@
             <line x1="10" y1="9" x2="8" y2="9"/>
           </svg>
           <span>Gestión de Cotizaciones</span>
-          <span class="nav-badge">{{ cotizaciones.length }}</span>
+        </div>
+        <div class="nav-item" *ngIf="puedeVer('pedidos')" [class.active]="activeView === 'pedidos'" (click)="showView('pedidos')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <span>Gestión de Pedidos</span>
         </div>
         <div class="nav-item" *ngIf="puedeVer('despacho')" [class.active]="activeView === 'despacho'" (click)="showView('despacho')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           <span>Gestión de Despacho</span>
-          <span class="nav-badge">{{ despachos.length }}</span>
         </div>
       </div>
+
       <div class="nav-section" *ngIf="puedeVerAlguno(['inventario','abastecimiento','proveedores'])">
         <div class="nav-section-label">Operaciones</div>
         <div class="nav-item" *ngIf="puedeVer('inventario')" [class.active]="activeView === 'inventario'" (click)="showView('inventario')">
@@ -63,6 +69,7 @@
           <span>Proveedores</span>
         </div>
       </div>
+
       <div class="nav-section" *ngIf="puedeVerAlguno(['rrhh','planillas'])">
         <div class="nav-section-label">Recursos Humanos</div>
         <div class="nav-item" *ngIf="puedeVer('rrhh')" [class.active]="activeView === 'rrhh'" (click)="showView('rrhh')">
@@ -74,18 +81,19 @@
           <span>Planillas</span>
         </div>
       </div>
+
       <div class="nav-section" *ngIf="puedeVer('reportes')">
         <div class="nav-section-label">Análisis</div>
-        <div class="nav-item" *ngIf="puedeVer('reportes')" [class.active]="activeView === 'reportes'" (click)="showView('reportes')">
+        <div class="nav-item" [class.active]="activeView === 'reportes'" (click)="showView('reportes')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           <span>Reportes</span>
         </div>
       </div>
+
       <div class="nav-section" *ngIf="puedeVer('mantenimiento')">
         <div class="nav-section-label">Administración</div>
-
-        <div class="nav-item" *ngIf="puedeVer('mantenimiento')" [class.active]="activeView === 'mantenimiento'" (click)="showView('mantenimiento')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-widht="2">
+        <div class="nav-item" [class.active]="activeView === 'mantenimiento'" (click)="showView('mantenimiento')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1v.2a2 2 0 0 1-4 0V21a1.65 1.65 0 0 0-1.4-1.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.4h-.2a2 2 0 0 1 0-4H3a1.65 1.65 0 0 0 1.6-1.4 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 3.5l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1v-.2a2 2 0 0 1 4 0V3a1.65 1.65 0 0 0 1.4 1.6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.17.38.54.65.95.73H21a2 2 0 0 1 0 4h-.65a1.65 1.65 0 0 0-.95 1.27z"/>
           </svg>
@@ -96,11 +104,11 @@
 
     <div class="sidebar-user">
       <div class="user-avatar">
-        {{ usuarioActual?.username?.charAt(0).toUpperCase() }}  
+        {{ usuarioActual?.username?.charAt(0).toUpperCase() }}
       </div>
       <div class="user-info">
-        <div class="user-name">{{usuarioActual?.username}}</div>
-        <div class="user-role">{{rolActual}}</div>
+        <div class="user-name">{{ usuarioActual?.username }}</div>
+        <div class="user-role">{{ rolActual }}</div>
       </div>
     </div>
   </aside>
@@ -119,46 +127,43 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" placeholder="Buscar en el sistema...">
         </div>
-        <div class="notif-wrap" (clickOutside)="cerrarNotif()">
-  <div class="topbar-btn" (click)="toggleNotif()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-    </svg>
-    <span class="notif-dot" *ngIf="notifNoLeidas > 0">{{ notifNoLeidas }}</span>
-  </div>
 
-  <div class="notif-panel" *ngIf="showNotif">
-    <div class="notif-panel-header">
-      <span class="notif-panel-title">Notificaciones</span>
-      <button class="notif-mark-all" (click)="marcarTodasLeidas()">Marcar todas como leídas</button>
-    </div>
+        <!-- Notificaciones -->
+        <div class="notif-wrap">
+          <div class="topbar-btn" (click)="toggleNotif()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="notif-dot" *ngIf="notifNoLeidas > 0">{{ notifNoLeidas }}</span>
+          </div>
 
-    <div class="notif-list">
-      <div
-        class="notif-item"
-        *ngFor="let n of notificaciones"
-        [class.no-leida]="!n.leida"
-        (click)="marcarLeida(n)">
-        
-        <div class="notif-icono">{{ n.icono }}</div>
-
-        <div class="notif-content">
-          <div class="notif-titulo">{{ n.titulo }}</div>
-          <div class="notif-msg">{{ n.msg }}</div>
-          <div class="notif-tiempo">{{ n.tiempo }}</div>
+          <div class="notif-panel" *ngIf="showNotif">
+            <div class="notif-panel-header">
+              <span class="notif-panel-title">Notificaciones</span>
+              <button class="notif-mark-all" (click)="marcarTodasLeidas()">Marcar todas como leídas</button>
+            </div>
+            <div class="notif-list">
+              <div class="notif-item" *ngFor="let n of notificaciones"
+                   [class.no-leida]="!n.leida" (click)="marcarLeida(n)">
+                <div class="notif-icono">{{ n.icono }}</div>
+                <div class="notif-content">
+                  <div class="notif-titulo">{{ n.titulo }}</div>
+                  <div class="notif-msg">{{ n.msg }}</div>
+                  <div class="notif-tiempo">{{ n.tiempo }}</div>
+                </div>
+                <div class="notif-unread-dot" *ngIf="!n.leida"></div>
+              </div>
+            </div>
+            <div class="notif-panel-footer">
+              <button class="btn btn-ghost btn-sm" (click)="cerrarNotif()">Cerrar</button>
+            </div>
+          </div>
         </div>
 
-        <div class="notif-unread-dot" *ngIf="!n.leida"></div>
-      </div>
-    </div>
-
-    <div class="notif-panel-footer">
-      <button class="btn btn-ghost btn-sm" (click)="cerrarNotif()">Cerrar</button>
-    </div>
-  </div>
-</div>
-        <div class="user-avatar" style="width:36px;height:36px;font-size:13px;">AC</div>
+        <div class="user-avatar" style="width:36px;height:36px;font-size:13px;">
+          {{ usuarioActual?.username?.charAt(0).toUpperCase() }}
+        </div>
         <button class="btn-logout" (click)="logout()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -173,36 +178,44 @@
     <!-- CONTENT -->
     <div class="content">
 
-      <!-- ═══════════════════════════════════════════════════════ DASHBOARD -->
+      <!-- ═══ DASHBOARD ═══ -->
       <div *ngIf="activeView === 'dashboard'">
         <div class="cards-grid">
           <div class="metric-card">
             <div class="metric-header">
-              <div class="metric-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+              <div class="metric-icon blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
               <span class="metric-trend trend-up">↑ 12.4%</span>
             </div>
-            <div><div class="metric-value">{{ formatMoney(getVentasTotales()) }}</div><div class="metric-label">Ventas Totales del Mes</div></div>
+            <div><div class="metric-value">S/ 186,450</div><div class="metric-label">Ventas Totales del Mes</div></div>
           </div>
           <div class="metric-card">
             <div class="metric-header">
-              <div class="metric-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div class="metric-icon orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
               <span class="metric-trend trend-down">↓ 3.1%</span>
             </div>
-            <div><div class="metric-value">{{ getVentasPendientes() }}</div><div class="metric-label">Pedidos Pendientes</div></div>
+            <div><div class="metric-value">2</div><div class="metric-label">Pedidos Pendientes</div></div>
           </div>
           <div class="metric-card">
             <div class="metric-header">
-              <div class="metric-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+              <div class="metric-icon red">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              </div>
               <span class="metric-trend trend-down">↑ 8 items</span>
             </div>
-            <div><div class="metric-value">{{ productos.length }}</div><div class="metric-label">SKUs en Inventario</div></div>
+            <div><div class="metric-value">4</div><div class="metric-label">SKUs en Inventario</div></div>
           </div>
           <div class="metric-card">
             <div class="metric-header">
-              <div class="metric-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+              <div class="metric-icon green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              </div>
               <span class="metric-trend trend-up">↑ 6.7%</span>
             </div>
-            <div><div class="metric-value">{{ despachos.length }}</div><div class="metric-label">Despachos Registrados</div></div>
+            <div><div class="metric-value">3</div><div class="metric-label">Despachos Registrados</div></div>
           </div>
         </div>
 
@@ -251,1068 +264,34 @@
           <table>
             <thead><tr><th>Pedido</th><th>Cliente</th><th>Producto</th><th>Total</th><th>Fecha</th><th>Estado</th></tr></thead>
             <tbody>
-              <tr *ngFor="let v of ventas.slice(0,5)">
-                <td><strong>{{ v.id }}</strong></td>
-                <td>{{ v.cliente }}</td>
-                <td>{{ v.producto }}</td>
-                <td><strong>{{ formatMoney(v.total) }}</strong></td>
-                <td>{{ v.fecha }}</td>
-                <td><span class="badge" [class]="getBadgeClass(v.estado)">{{ v.estado }}</span></td>
-              </tr>
+              <tr><td><strong>#PED-2847</strong></td><td>Constructora Lima S.A.</td><td>Acero estructural A36</td><td><strong>S/ 48,200</strong></td><td>Hoy, 09:41</td><td><span class="badge badge-green">Aprobado</span></td></tr>
+              <tr><td><strong>#PED-2846</strong></td><td>Minera Andina Corp.</td><td>Barras corrugadas 1"</td><td><strong>S/ 22,750</strong></td><td>Hoy, 08:15</td><td><span class="badge badge-orange">Pendiente</span></td></tr>
+              <tr><td><strong>#PED-2845</strong></td><td>Infraestructura Sur SAC</td><td>Perfiles H 8x8</td><td><strong>S/ 91,400</strong></td><td>Hoy, 07:30</td><td><span class="badge badge-green">Aprobado</span></td></tr>
+              <tr><td><strong>#PED-2844</strong></td><td>Grupo Constructor Norte</td><td>Planchas 6mm</td><td><strong>S/ 15,800</strong></td><td>Ayer, 18:20</td><td><span class="badge badge-yellow">En revisión</span></td></tr>
+              <tr><td><strong>#PED-2843</strong></td><td>Desarrollos Urbanos Perú</td><td>Alambre galvanizado #16</td><td><strong>S/ 8,300</strong></td><td>Ayer, 16:45</td><td><span class="badge badge-red">Rechazado</span></td></tr>
             </tbody>
           </table>
         </div>
       </div>
+      <!-- FIN DASHBOARD -->
 
-      <!-- ═══════════════════════════════════════════════════════ VENTAS -->
-      <div *ngIf="activeView === 'ventas'">
-        <div class="page-header">
-          <div class="page-header-left">
-            <h2>Gestión de Ventas</h2>
-            <p>Administre y controle todas las operaciones comerciales</p>
-          </div>
-          <div class="page-header-right">
-            <button class="btn btn-secondary">Exportar</button>
-            <button class="btn btn-primary" (click)="openModal('venta','crear')">+ Nueva Venta</button>
-          </div>
-        </div>
-        <div class="summary-strip">
-          <div class="summary-item"><div class="val">{{ formatMoney(getVentasTotales()) }}</div><div class="lbl">Ventas Totales</div></div>
-          <div class="summary-item"><div class="val" style="color:#DD6B20">{{ getVentasPendientes() }}</div><div class="lbl">Pendientes</div></div>
-          <div class="summary-item"><div class="val" style="color:#38A169">{{ getVentasCompletadas() }}</div><div class="lbl">Completadas</div></div>
-        </div>
-        <div class="table-card">
-          <div class="filters-row">
-            <div class="search-input">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Buscar por cliente o pedido..." [(ngModel)]="ventaSearch">
-            </div>
-            <select class="filter-select" [(ngModel)]="ventaFiltroEstado">
-              <option value="">Todos los estados</option>
-              <option>Aprobado</option><option>Pendiente</option><option>En revisión</option><option>Rechazado</option>
-            </select>
-          </div>
-          <table>
-            <thead><tr><th>Pedido</th><th>Cliente</th><th>Producto</th><th>Cantidad</th><th>Total</th><th>Vendedor</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let v of ventasFiltradas">
-                <td>{{ v.id }}</td>
-                <td><div class="td-main">{{ v.cliente }}</div><div class="td-sub">RUC: {{ v.ruc }}</div></td>
-                <td>{{ v.producto }}</td>
-                <td>{{ v.cantidad }}</td>
-                <td><strong>{{ formatMoney(v.total) }}</strong></td>
-                <td>{{ v.vendedor }}</td>
-                <td>
-                  <div class="estado-dropdown">
-                    <span class="badge" [class]="getBadgeClass(v.estado)" style="cursor:pointer">{{ v.estado }} ▾</span>
-                    <div class="estado-menu">
-                      <div (click)="cambiarEstadoVenta(v, 'Aprobado')">✓ Aprobado</div>
-                      <div (click)="cambiarEstadoVenta(v, 'Pendiente')">⏳ Pendiente</div>
-                      <div (click)="cambiarEstadoVenta(v, 'En revisión')">👁 En revisión</div>
-                      <div (click)="cambiarEstadoVenta(v, 'Rechazado')">✗ Rechazado</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="action-col">
-                    <button class="btn btn-ghost btn-sm" (click)="openModal('venta','ver',v)">Ver</button>
-                    <button class="btn btn-secondary btn-sm" (click)="openModal('venta','editar',v)">Editar</button>
-                    <button class="btn btn-danger btn-sm" (click)="pedirEliminar('venta',v)">✕</button>
-                  </div>
-                </td>
-              </tr>
-              <tr *ngIf="ventasFiltradas.length === 0">
-                <td colspan="8" class="empty-row">No se encontraron resultados</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <!-- ═══════════════════════════════════════════════════════ COTIZACIONES -->
-      <div *ngIf="activeView === 'cotizaciones'">
-        <div class="page-header">
-          <div class="page-header-left">
-            <h2>Gestión de Cotizaciones</h2>
-            <p>Registro, cálculo automático de descuentos y consulta de cotizaciones</p>
-          </div>
-          <div class="page-header-right">
-            <button class="btn btn-secondary" (click)="cargarCotizaciones()">Actualizar</button>
-            <button class="btn btn-primary" *ngIf="puedeRegistrarCotizacion()" (click)="openModal('cotizacion','crear')">
-              + Nueva Cotización
-            </button>
-          </div>
-        </div>
+      <!-- ═══ SUB-COMPONENTES ═══ -->
+      <app-ventas         *ngIf="activeView === 'ventas'"></app-ventas>
+      <app-cotizaciones   *ngIf="activeView === 'cotizaciones'"></app-cotizaciones>
+      <app-pedidos        *ngIf="activeView === 'pedidos'"></app-pedidos>
+      <app-despacho       *ngIf="activeView === 'despacho'"></app-despacho>
+      <app-inventario     *ngIf="activeView === 'inventario'"></app-inventario>
+      <app-abastecimiento *ngIf="activeView === 'abastecimiento'"></app-abastecimiento>
+      <app-proveedores    *ngIf="activeView === 'proveedores'"></app-proveedores>
+      <app-rrhh           *ngIf="activeView === 'rrhh'"></app-rrhh>
+      <app-planillas      *ngIf="activeView === 'planillas'"></app-planillas>
+      <app-reportes       *ngIf="activeView === 'reportes'"></app-reportes>
+      <app-mantenimiento  *ngIf="activeView === 'mantenimiento'"></app-mantenimiento>
 
-        <div class="summary-strip">
-          <div class="summary-item">
-            <div class="val">{{ cotizaciones.length }}</div>
-            <div class="lbl">Cotizaciones Registradas</div>
-          </div>
-          <div class="summary-item">
-            <div class="val" style="color:#DD6B20">
-              {{ getCotizacionesPendientes() }}
-            </div>
-            <div class="lbl">Pendientes</div>
-          </div>
-          <div class="summary-item">
-            <div class="val" style="color:#38A169">
-              {{ formatMoney(getTotalCotizado()) }}
-            </div>
-            <div class="lbl">Valor Total Cotizado</div>
-          </div>
-        </div>
-
-        <div class="table-card">
-          <div class="filters-row">
-            <div class="search-input">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input type="text" placeholder="Buscar por código, cliente, RUC o producto..." [(ngModel)]="cotizacionSearch">
-            </div>
-
-            <select class="filter-select" [(ngModel)]="cotizacionFiltroEstado">
-              <option value="">Todos los estados</option>
-              <option value="PENDIENTE">PENDIENTE</option>
-              <option value="APROBADA">APROBADA</option>
-              <option value="RECHAZADA">RECHAZADA</option>
-            </select>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Cliente</th>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Subtotal</th>
-                <th>Descuento</th>
-                <th>Total</th>
-                <th>Estado</th>
-                <th>Vendedor</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr *ngFor="let c of cotizacionesFiltradas">
-                <td><strong>{{ c.codigo }}</strong></td>
-                <td>
-                  <div class="td-main">{{ c.cliente }}</div>
-                  <div class="td-sub">RUC: {{ c.ruc || '—' }}</div>
-                </td>
-                <td>{{ c.producto }}</td>
-                <td>{{ c.cantidad }}</td>
-                <td>{{ formatMoney(+c.subtotal!) }}</td>
-                <td>
-                  {{ c.descuento_porcentaje }}%
-                  <div class="td-sub">{{ formatMoney(+c.descuento_monto!) }}</div>
-                </td>
-                <td><strong>{{ formatMoney(+c.total!) }}</strong></td>
-                <td>
-                  <div class="estado-dropdown">
-                    <span class="badge" [class]="getBadgeClass(c.estado || '')" style="cursor:pointer">
-                      {{ c.estado }} ▾
-                    </span>
-
-                    <div class="estado-menu" *ngIf="puedeRegistrarCotizacion()">
-                      <div (click)="cambiarEstadoCotizacion(c, 'PENDIENTE')">⏳ PENDIENTE</div>
-                      <div (click)="cambiarEstadoCotizacion(c, 'APROBADA')">✓ APROBADA</div>
-                      <div (click)="cambiarEstadoCotizacion(c, 'RECHAZADA')">✕ RECHAZADA</div>
-                    </div>
-                  </div>
-                </td>
-                <td>{{ c.vendedor || '—' }}</td>
-                <td>
-                  <div class="action-col">
-                    <button class="btn btn-ghost btn-sm" (click)="openModal('cotizacion','ver',c)">Ver</button>
-                  </div>
-                </td>
-              </tr>
-
-              <tr *ngIf="!loadingCotizaciones && cotizacionesFiltradas.length === 0">
-                <td colspan="10" class="empty-row">No se encontraron cotizaciones</td>
-              </tr>
-
-              <tr *ngIf="loadingCotizaciones && cotizacionesFiltradas.length ===0 ">
-                <td colspan="10" class="empty-row">Cargando cotizaciones...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <!-- ═══════════════════════════════════════════════════════ INVENTARIO -->
-      <div *ngIf="activeView === 'inventario'">
-        <div class="page-header">
-          <div class="page-header-left"><h2>Gestión de Inventario</h2><p>Control de stock y productos en almacén</p></div>
-          <div class="page-header-right">
-            <button class="btn btn-secondary">Reporte</button>
-            <button class="btn btn-primary" (click)="openModal('producto','crear')">+ Agregar Producto</button>
-          </div>
-        </div>
-        <div class="summary-strip">
-          <div class="summary-item"><div class="val">{{ productos.length }}</div><div class="lbl">Total SKUs</div></div>
-          <div class="summary-item"><div class="val" style="color:#E53E3E">{{ productos.filter(p => p.stock < p.minimo).length }}</div><div class="lbl">Stock Crítico</div></div>
-          <div class="summary-item"><div class="val">S/ 12.8M</div><div class="lbl">Valor Total Inventario</div></div>
-        </div>
-        <div class="table-card">
-          <div class="filters-row">
-            <div class="search-input">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Buscar producto..." [(ngModel)]="inventarioSearch">
-            </div>
-            <select class="filter-select" [(ngModel)]="inventarioFiltroCategoria">
-              <option value="">Todas las categorías</option>
-              <option>Acero Estructural</option><option>Barras Corrugadas</option>
-              <option>Perfiles Laminados</option><option>Alambres</option>
-            </select>
-            <select class="filter-select" [(ngModel)]="inventarioFiltroEstado">
-              <option value="">Todos los estados</option>
-              <option>Normal</option><option>Bajo stock</option><option>Sin stock</option>
-            </select>
-          </div>
-          <table>
-            <thead><tr><th>Código</th><th>Producto</th><th>Categoría</th><th>Stock</th><th>Mínimo</th><th>Ubicación</th><th>Valor Unit.</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let p of productosFiltrados">
-                <td>{{ p.codigo }}</td>
-                <td><div class="td-main">{{ p.nombre }}</div><div class="td-sub">{{ p.descripcion }}</div></td>
-                <td>{{ p.categoria }}</td>
-                <td>
-                  <div class="stock-cell">
-                    <span class="stock-num" [style.color]="getStockColor(p)">{{ p.stock }} TM</span>
-                    <div style="flex:1"><div class="progress-bar"><div class="progress-fill" [style.width.%]="getStockPct(p)" [style.background]="getStockColor(p)"></div></div></div>
-                  </div>
-                </td>
-                <td>{{ p.minimo }} TM</td>
-                <td>{{ p.ubicacion }}</td>
-                <td>{{ formatMoney(p.valorUnit) }}/TM</td>
-                <td><span class="badge" [class]="getBadgeClass(getEstadoProducto(p))">{{ getEstadoProducto(p) }}</span></td>
-                <td>
-                  <div class="action-col">
-                    <button class="btn btn-secondary btn-sm" (click)="openModal('producto','editar',p)">Editar</button>
-                    <button class="btn btn-danger btn-sm" (click)="pedirEliminar('producto',p)">✕</button>
-                  </div>
-                </td>
-              </tr>
-              <tr *ngIf="productosFiltrados.length === 0">
-                <td colspan="9" class="empty-row">No se encontraron resultados</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════ ABASTECIMIENTO -->
-      <div *ngIf="activeView === 'abastecimiento'">
-        <div class="page-header">
-          <div class="page-header-left"><h2>Gestión de Abastecimiento</h2><p>Órdenes de compra y control de proveedores</p></div>
-          <div class="page-header-right">
-            <button class="btn btn-primary" (click)="openModal('orden','crear')">+ Nueva Orden de Compra</button>
-          </div>
-        </div>
-        <div class="summary-strip">
-          <div class="summary-item"><div class="val">{{ ordenes.length }}</div><div class="lbl">Órdenes Activas</div></div>
-          <div class="summary-item"><div class="val" style="color:#DD6B20">{{ ordenes.filter(o=>o.estado==='Pendiente').length }}</div><div class="lbl">Pendientes Aprobación</div></div>
-          <div class="summary-item"><div class="val">S/ 2.1M</div><div class="lbl">Comprometido</div></div>
-        </div>
-        <div class="table-card">
-          <div class="filters-row">
-            <div class="search-input">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Buscar orden o proveedor..." [(ngModel)]="abastSearch">
-            </div>
-            <select class="filter-select" [(ngModel)]="abastFiltroEstado">
-              <option value="">Todos los estados</option>
-              <option>Aprobada</option><option>Pendiente</option><option>En tránsito</option>
-            </select>
-          </div>
-          <table>
-            <thead><tr><th>Orden</th><th>Proveedor</th><th>Producto</th><th>Cantidad</th><th>Total</th><th>Fecha Entrega</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let o of ordenesFiltradas">
-                <td>{{ o.id }}</td>
-                <td><div class="td-main">{{ o.proveedor }}</div><div class="td-sub">{{ o.origen }}</div></td>
-                <td>{{ o.producto }}</td>
-                <td>{{ o.cantidad }}</td>
-                <td>{{ formatMoney(o.total) }}</td>
-                <td>{{ o.fechaEntrega }}</td>
-                <td>
-                  <div class="estado-dropdown">
-                    <span class="badge" [class]="getBadgeClass(o.estado)" style="cursor:pointer">{{ o.estado }} ▾</span>
-                    <div class="estado-menu">
-                      <div (click)="cambiarEstadoOrden(o,'Aprobada')">✓ Aprobada</div>
-                      <div (click)="cambiarEstadoOrden(o,'Pendiente')">⏳ Pendiente</div>
-                      <div (click)="cambiarEstadoOrden(o,'En tránsito')">🚚 En tránsito</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="action-col">
-                    <button class="btn btn-secondary btn-sm" (click)="openModal('orden','editar',o)">Editar</button>
-                    <button class="btn btn-danger btn-sm" (click)="pedirEliminar('orden',o)">✕</button>
-                  </div>
-                </td>
-              </tr>
-              <tr *ngIf="ordenesFiltradas.length === 0">
-                <td colspan="8" class="empty-row">No se encontraron resultados</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════ PROVEEDORES -->
-      <div *ngIf="activeView === 'proveedores'">
-        <div class="page-header">
-          <div class="page-header-left"><h2>Gestión de Proveedores</h2><p>Directorio y evaluación de proveedores estratégicos</p></div>
-          <div class="page-header-right">
-            <button class="btn btn-primary" (click)="openModal('proveedor','crear')">+ Agregar Proveedor</button>
-          </div>
-        </div>
-        <div class="table-card">
-          <div class="filters-row">
-            <div class="search-input">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Buscar proveedor..." [(ngModel)]="provSearch">
-            </div>
-            <select class="filter-select" [(ngModel)]="provFiltroEstado">
-              <option value="">Todos</option><option>Activo</option><option>Inactivo</option>
-            </select>
-          </div>
-          <table>
-            <thead><tr><th>Proveedor</th><th>RUC / NIT</th><th>Contacto</th><th>Teléfono</th><th>Categoría</th><th>Calificación</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let p of proveedoresFiltrados">
-                <td><div class="td-main">{{ p.nombre }}</div><div class="td-sub">{{ p.origen }}</div></td>
-                <td>{{ p.ruc }}</td>
-                <td>{{ p.contacto }}</td>
-                <td>{{ p.telefono }}</td>
-                <td>{{ p.categoria }}</td>
-                <td [style.color]="p.calificacion >= 4.5 ? '#38A169' : '#D69E2E'" style="font-weight:700">★ {{ p.calificacion }}</td>
-                <td><span class="badge" [class]="getBadgeClass(p.estado)">{{ p.estado }}</span></td>
-                <td>
-                  <div class="action-col">
-                    <button class="btn btn-ghost btn-sm" (click)="openModal('proveedor','ver',p)">Ver</button>
-                    <button class="btn btn-secondary btn-sm" (click)="openModal('proveedor','editar',p)">Editar</button>
-                    <button class="btn btn-danger btn-sm" (click)="pedirEliminar('proveedor',p)">✕</button>
-                  </div>
-                </td>
-              </tr>
-              <tr *ngIf="proveedoresFiltrados.length === 0">
-                <td colspan="8" class="empty-row">No se encontraron resultados</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════ DESPACHO -->
-      <div *ngIf="activeView === 'despacho'">
-        <div class="page-header">
-          <div class="page-header-left"><h2>Gestión de Despacho</h2><p>Control de envíos y confirmación de entregas</p></div>
-          <div class="page-header-right">
-            <button class="btn btn-primary" (click)="openModal('despacho','crear')">+ Nuevo Despacho</button>
-          </div>
-        </div>
-        <div class="summary-strip">
-          <div class="summary-item"><div class="val" style="color:#DD6B20">{{ despachos.filter(d=>d.estado==='Pendiente').length }}</div><div class="lbl">Pendientes</div></div>
-          <div class="summary-item"><div class="val" style="color:#2B6CB0">{{ despachos.filter(d=>d.estado==='Enviado').length }}</div><div class="lbl">En Tránsito</div></div>
-          <div class="summary-item"><div class="val" style="color:#38A169">{{ despachos.filter(d=>d.estado==='Entregado').length }}</div><div class="lbl">Entregados</div></div>
-        </div>
-        <div class="table-card">
-          <div class="filters-row">
-            <div class="search-input">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Buscar por cliente o guía..." [(ngModel)]="despachoSearch">
-            </div>
-            <select class="filter-select" [(ngModel)]="despachoFiltroEstado">
-              <option value="">Todos</option><option>Pendiente</option><option>Enviado</option><option>Entregado</option>
-            </select>
-          </div>
-          <table>
-            <thead><tr><th>Guía</th><th>Cliente</th><th>Dirección</th><th>Producto</th><th>Peso</th><th>Transportista</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let d of despachosFiltrados">
-                <td>{{ d.guia }}</td>
-                <td><div class="td-main">{{ d.cliente }}</div></td>
-                <td>{{ d.direccion }}</td>
-                <td>{{ d.producto }}</td>
-                <td>{{ d.peso }}</td>
-                <td>{{ d.transportista }}</td>
-                <td>
-                  <div class="estado-dropdown">
-                    <span class="badge" [class]="getBadgeClass(d.estado)" style="cursor:pointer">{{ d.estado }} ▾</span>
-                    <div class="estado-menu">
-                      <div (click)="cambiarEstadoDespacho(d,'Pendiente')">⏳ Pendiente</div>
-                      <div (click)="cambiarEstadoDespacho(d,'Enviado')">🚚 Enviado</div>
-                      <div (click)="confirmarEntrega(d)">✓ Entregado</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="action-col">
-                    <button class="btn btn-success btn-sm" *ngIf="d.estado !== 'Entregado'" (click)="confirmarEntrega(d)">✓ Confirmar</button>
-                    <button class="btn btn-secondary btn-sm" (click)="openModal('despacho','editar',d)">Editar</button>
-                    <button class="btn btn-danger btn-sm" (click)="pedirEliminar('despacho',d)">✕</button>
-                  </div>
-                </td>
-              </tr>
-              <tr *ngIf="despachosFiltrados.length === 0">
-                <td colspan="8" class="empty-row">No se encontraron resultados</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════ RRHH -->
-      <div *ngIf="activeView === 'rrhh'">
-        <div class="page-header">
-          <div class="page-header-left"><h2>Gestión de Recursos Humanos</h2><p>Control de asistencia, tardanzas y personal</p></div>
-          <div class="page-header-right">
-            <button class="btn btn-secondary">Exportar Reporte</button>
-            <button class="btn btn-primary" (click)="openModal('empleado','crear')">+ Nuevo Empleado</button>
-          </div>
-        </div>
-        <div class="summary-strip">
-          <div class="summary-item"><div class="val">{{ empleados.length }}</div><div class="lbl">Total Empleados</div></div>
-          <div class="summary-item"><div class="val" style="color:#38A169">{{ empleados.filter(e=>e.asistencia==='Presente').length }}</div><div class="lbl">Presentes Hoy</div></div>
-          <div class="summary-item"><div class="val" style="color:#E53E3E">{{ empleados.filter(e=>e.asistencia!=='Presente').length }}</div><div class="lbl">Ausentes / Tardanzas</div></div>
-        </div>
-        <div class="table-card">
-          <div class="table-card-header">
-            <div><div class="table-card-title">Registro de Asistencia</div><div class="table-card-sub">Lunes 21 de julio de 2025</div></div>
-            <select class="filter-select" [(ngModel)]="rrhhFiltroArea">
-              <option value="">Todas las áreas</option>
-              <option *ngFor="let a of areasUnicas()">{{ a }}</option>
-            </select>
-          </div>
-          <table>
-            <thead><tr><th>Empleado</th><th>Cargo</th><th>Área</th><th>Hora Entrada</th><th>Tardanza</th><th>Asistencia</th><th>Observación</th><th>Acciones</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let e of empleadosFiltrados">
-                <td>
-                  <div class="emp-row">
-                    <div class="emp-avatar" [style.background]="e.color">{{ e.iniciales }}</div>
-                    <div><div class="td-main">{{ e.nombre }}</div><div class="td-sub">ID: {{ e.id }}</div></div>
-                  </div>
-                </td>
-                <td>{{ e.cargo }}</td>
-                <td>{{ e.area }}</td>
-                <td>{{ e.horaEntrada }}</td>
-                <td>{{ e.tardanza }}</td>
-                <td>
-                  <div class="estado-dropdown">
-                    <span class="badge" [class]="getBadgeClass(e.asistencia)" style="cursor:pointer">{{ e.asistencia }} ▾</span>
-                    <div class="estado-menu">
-                      <div (click)="cambiarAsistencia(e,'Presente')">✓ Presente</div>
-                      <div (click)="cambiarAsistencia(e,'Tardanza')">⏰ Tardanza</div>
-                      <div (click)="cambiarAsistencia(e,'Ausente')">✗ Ausente</div>
-                    </div>
-                  </div>
-                </td>
-                <td>{{ e.observacion }}</td>
-                <td>
-                  <div class="action-col">
-                    <button class="btn btn-secondary btn-sm" (click)="openModal('empleado','editar',e)">Editar</button>
-                    <button class="btn btn-danger btn-sm" (click)="pedirEliminar('empleado',e)">✕</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════ PLANILLAS -->
-      <div *ngIf="activeView === 'planillas'">
-        <div class="page-header">
-          <div class="page-header-left"><h2>Gestión de Planillas</h2><p>Control salarial y pagos — Periodo: Julio 2025</p></div>
-          <div class="page-header-right">
-            <button class="btn btn-secondary">Generar PDF</button>
-            <button class="btn btn-primary">Procesar Planilla</button>
-          </div>
-        </div>
-        <div class="summary-strip">
-          <div class="summary-item"><div class="val">S/ 842K</div><div class="lbl">Total Planilla Mensual</div></div>
-          <div class="summary-item"><div class="val" style="color:#38A169">{{ planillas.filter(p=>p.estado==='Pagado').length }}</div><div class="lbl">Pagos Procesados</div></div>
-          <div class="summary-item"><div class="val" style="color:#DD6B20">{{ planillas.filter(p=>p.estado==='Pendiente').length }}</div><div class="lbl">Pendientes</div></div>
-        </div>
-        <div class="table-card">
-          <div class="table-card-header"><div class="table-card-title">Detalle de Planilla</div></div>
-          <table>
-            <thead><tr><th>Empleado</th><th>Cargo</th><th>Salario Base</th><th>Descuentos</th><th>Bonos</th><th>Total Neto</th><th>Estado Pago</th><th>Acción</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let p of planillas">
-                <td>
-                  <div class="emp-row">
-                    <div class="emp-avatar" [style.background]="p.color">{{ p.iniciales }}</div>
-                    <span>{{ p.nombre }}</span>
-                  </div>
-                </td>
-                <td>{{ p.cargo }}</td>
-                <td>{{ formatMoney(p.salarioBase) }}</td>
-                <td style="color:#E53E3E">{{ formatMoney(p.descuentos) }}</td>
-                <td style="color:#38A169">{{ formatMoney(p.bonos) }}</td>
-                <td><strong>{{ formatMoney(getTotalNeto(p)) }}</strong></td>
-                <td><span class="badge" [class]="getBadgeClass(p.estado)">{{ p.estado }}</span></td>
-                <td>
-                  <div class="action-col">
-                    <button class="btn btn-ghost btn-sm" (click)="verBoleta(p)">Boleta</button>
-                    <button class="btn btn-primary btn-sm" *ngIf="p.estado==='Pendiente'" (click)="procesarPago(p)">Pagar</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ═══════════════════════════════════════════════════════ REPORTES -->
-      <div *ngIf="activeView === 'reportes'">
-        <div class="page-header">
-          <div class="page-header-left"><h2>Gestión de Reportes</h2><p>Análisis de indicadores clave del negocio</p></div>
-          <div class="page-header-right">
-            <select class="filter-select"><option>Julio 2025</option><option>Junio 2025</option></select>
-            <button class="btn btn-primary">Exportar</button>
-          </div>
-        </div>
-        <div class="cards-grid">
-          <div class="metric-card">
-            <div class="metric-header"><div class="metric-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span class="metric-trend trend-up">↑ 12.4%</span></div>
-            <div><div class="metric-value">{{ formatMoney(getVentasTotales()) }}</div><div class="metric-label">Ingresos Totales</div></div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-header"><div class="metric-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><span class="metric-trend trend-up">↑ 5.2%</span></div>
-            <div><div class="metric-value">S/ 1.8M</div><div class="metric-label">Utilidad Bruta</div></div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-header"><div class="metric-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><span class="metric-trend trend-up">↑ 3.8%</span></div>
-            <div><div class="metric-value">{{ productos.length }}</div><div class="metric-label">SKUs en Stock</div></div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-header"><div class="metric-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><span class="metric-trend trend-down">↓ 1.1%</span></div>
-            <div><div class="metric-value">{{ empleados.length }}</div><div class="metric-label">Personal Activo</div></div>
-          </div>
-        </div>
-        <div class="table-card">
-          <div class="table-card-header"><div class="table-card-title">Top 5 Productos más Vendidos</div></div>
-          <table>
-            <thead><tr><th>#</th><th>Producto</th><th>Unidades Vendidas</th><th>Ingresos</th><th>Margen</th><th>Tendencia</th></tr></thead>
-            <tbody>
-              <tr><td><strong>1</strong></td><td>Acero estructural A36 6m</td><td>284 TM</td><td>S/ 1,192,800</td><td>28%</td><td style="color:#38A169;font-weight:700">↑ +14.2%</td></tr>
-              <tr><td><strong>2</strong></td><td>Barra corrugada 3/4" x 9m</td><td>198 TM</td><td>S/ 752,400</td><td>22%</td><td style="color:#38A169;font-weight:700">↑ +8.7%</td></tr>
-              <tr><td><strong>3</strong></td><td>Perfil H 8x8 12m</td><td>145 TM</td><td>S/ 739,500</td><td>31%</td><td style="color:#38A169;font-weight:700">↑ +5.1%</td></tr>
-              <tr><td><strong>4</strong></td><td>Plancha de acero 6mm</td><td>112 TM</td><td>S/ 403,200</td><td>19%</td><td style="color:#E53E3E;font-weight:700">↓ -2.3%</td></tr>
-              <tr><td><strong>5</strong></td><td>Acero galvanizado cal. 18</td><td>87 TM</td><td>S/ 391,500</td><td>24%</td><td style="color:#38A169;font-weight:700">↑ +11.8%</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!--=========================Mantenimiento===========-->
-      <div *ngIf="activeView === 'mantenimiento'">
-        <div class="page-header">
-          <div class="page-header-left">
-            <h2>Mantenimiento del Sistema</h2>
-            <p>Administración de usuarios, roles y configuración del sistema</p>
-          </div>
-          <div class="page-header-right">
-            <button class="btn btn-primary">+ Nuevo Usuario</button>
-          </div>
-        </div>
-
-        <div class="summary-strip">
-          <div class="summary-item">
-            <div class="val">{{ usuariosSistema.length}}</div>
-            <div class="lbl">Usuarios Registrados</div>
-          </div>
-
-          <div class="summary-item">
-            <div class="val" style="color:#38A169">
-              {{ usuariosSistema.filter(u => u.estado === 'Activo').length }}
-            </div>
-            <div class="lbl">Usuarios Actions</div>
-          </div>
-          
-          <div class="table-card">
-            <div class="table-card-header">
-              <div>
-                <div class="table-card-title">Gestión de Usuarios</div>
-                <div class="table-card-sub">Acceso y perfiles del sistema ERP</div>
-              </div>
-            </div>
-
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Usuario</th>
-                  <th>Rol</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                <tr *ngFor="let u of usuariosSistema">
-                  <td>{{ u.id }}</td>
-                  <td><strong>{{ u.username }}</strong></td>
-                  <td>{{ u.rol }}</td>
-                  <td>
-                    <span class="badge" [class]="getBadgeClass(u.estado)">
-                      {{u.estado}}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="action-col">
-                      <button class="btn btn-ghost btn-sm">Ver</button>
-                      <button class="btn btn-secondary btn-sm">Editar</button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-      </div>
     </div><!-- /content -->
   </div><!-- /main-area -->
 
-  <!-- ═══════════════════════════════════════════════════════ MODAL OVERLAY -->
-  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-    <div class="modal-box" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ modalTitle }}</h3>
-        <button class="modal-close" (click)="closeModal()">✕</button>
-      </div>
-
-      <!-- ── ELIMINAR ── -->
-      <div *ngIf="modalTipo === 'eliminar'" class="modal-body">
-        <div class="delete-warning">
-          <div class="delete-icon">⚠️</div>
-          <p>¿Está seguro que desea eliminar este registro?<br><strong>Esta acción no se puede deshacer.</strong></p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-danger" (click)="confirmarEliminar()">Sí, eliminar</button>
-        </div>
-      </div>
-
-      <!-- ── BOLETA ── -->
-      <div *ngIf="modalTipo === 'boleta' && boletaEmpleado" class="modal-body">
-        <div class="boleta">
-          <div class="boleta-header">
-            <div class="boleta-logo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#1A365D" stroke-width="2" width="28"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            </div>
-            <div><div style="font-weight:800;font-size:16px;color:#1A365D">Siderúrgica Perú S.A.C.</div><div style="font-size:12px;color:#718096">Boleta de Pago — Julio 2025</div></div>
-          </div>
-          <div class="boleta-empleado">
-            <div class="emp-avatar" [style.background]="boletaEmpleado.color" style="width:48px;height:48px;font-size:18px">{{ boletaEmpleado.iniciales }}</div>
-            <div><div style="font-weight:700;font-size:16px">{{ boletaEmpleado.nombre }}</div><div style="color:#718096">{{ boletaEmpleado.cargo }}</div></div>
-          </div>
-          <div class="boleta-rows">
-            <div class="boleta-row"><span>Salario Base</span><span>{{ formatMoney(boletaEmpleado.salarioBase) }}</span></div>
-            <div class="boleta-row"><span>Bonificaciones</span><span style="color:#38A169">+ {{ formatMoney(boletaEmpleado.bonos) }}</span></div>
-            <div class="boleta-row"><span>Descuentos (AFP + ES Salud)</span><span style="color:#E53E3E">- {{ formatMoney(boletaEmpleado.descuentos) }}</span></div>
-            <div class="boleta-row boleta-total"><span>Total Neto</span><span>{{ formatMoney(getTotalNeto(boletaEmpleado)) }}</span></div>
-          </div>
-          <div style="text-align:center;margin-top:16px">
-            <span class="badge" [class]="getBadgeClass(boletaEmpleado.estado)">{{ boletaEmpleado.estado }}</span>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
-          <button class="btn btn-primary">Descargar PDF</button>
-        </div>
-      </div>
-
-      <!-- ── FORM: VENTA ── -->
-      <div *ngIf="modalTipo === 'venta' && modalMode !== 'ver'" class="modal-body">
-        <div class="form-grid">
-          <div class="form-field">
-            <label>Cliente *</label>
-            <input type="text" [(ngModel)]="ventaForm.cliente" placeholder="Nombre del cliente">
-          </div>
-          <div class="form-field">
-            <label>RUC</label>
-            <input type="text" [(ngModel)]="ventaForm.ruc" placeholder="20XXXXXXXXX">
-          </div>
-          <div class="form-field">
-            <label>Producto *</label>
-            <input type="text" [(ngModel)]="ventaForm.producto" placeholder="Nombre del producto">
-          </div>
-          <div class="form-field">
-            <label>Cantidad</label>
-            <input type="text" [(ngModel)]="ventaForm.cantidad" placeholder="Ej: 10 TM">
-          </div>
-          <div class="form-field">
-            <label>Total (S/)</label>
-            <input type="number" [(ngModel)]="ventaForm.total" placeholder="0.00">
-          </div>
-          <div class="form-field">
-            <label>Vendedor</label>
-            <input type="text" [(ngModel)]="ventaForm.vendedor" placeholder="Nombre del vendedor">
-          </div>
-          <div class="form-field full">
-            <label>Estado</label>
-            <select [(ngModel)]="ventaForm.estado">
-              <option>Pendiente</option><option>Aprobado</option><option>En revisión</option><option>Rechazado</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="guardar()">{{ modalMode === 'crear' ? 'Crear Venta' : 'Guardar Cambios' }}</button>
-        </div>
-      </div>
-
-      <!-- ── VER VENTA ── -->
-      <div *ngIf="modalTipo === 'venta' && modalMode === 'ver'" class="modal-body">
-        <div class="detail-grid">
-          <div class="detail-item"><div class="detail-label">Pedido</div><div class="detail-val">{{ ventaForm.id }}</div></div>
-          <div class="detail-item"><div class="detail-label">Cliente</div><div class="detail-val">{{ ventaForm.cliente }}</div></div>
-          <div class="detail-item"><div class="detail-label">RUC</div><div class="detail-val">{{ ventaForm.ruc }}</div></div>
-          <div class="detail-item"><div class="detail-label">Producto</div><div class="detail-val">{{ ventaForm.producto }}</div></div>
-          <div class="detail-item"><div class="detail-label">Cantidad</div><div class="detail-val">{{ ventaForm.cantidad }}</div></div>
-          <div class="detail-item"><div class="detail-label">Total</div><div class="detail-val">{{ formatMoney(ventaForm.total || 0) }}</div></div>
-          <div class="detail-item"><div class="detail-label">Vendedor</div><div class="detail-val">{{ ventaForm.vendedor }}</div></div>
-          <div class="detail-item"><div class="detail-label">Estado</div><div class="detail-val"><span class="badge" [class]="getBadgeClass(ventaForm.estado || '')">{{ ventaForm.estado }}</span></div></div>
-          <div class="detail-item"><div class="detail-label">Fecha</div><div class="detail-val">{{ ventaForm.fecha }}</div></div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
-          <button class="btn btn-primary" (click)="openModal('venta','editar',ventaForm)">Editar</button>
-        </div>
-      </div>
-
-      <!-- ── FORM: COTIZACIÓN ── -->
-      <div *ngIf="modalTipo === 'cotizacion' && modalMode !== 'ver'" class="modal-body">
-        <div class="form-grid">
-          <div class="form-field">
-            <label>Cliente *</label>
-            <input type="text" [(ngModel)]="cotizacionForm.cliente" placeholder="Nombre del cliente">
-          </div>
-
-          <div class="form-field">
-            <label>RUC</label>
-            <input type="text" [(ngModel)]="cotizacionForm.ruc" placeholder="20XXXXXXXXX">
-          </div>
-
-          <div class="form-field full">
-            <label>Producto *</label>
-            <input type="text" [(ngModel)]="cotizacionForm.producto" placeholder="Ej: Plancha de acero">
-          </div>
-
-          <div class="form-field">
-            <label>Cantidad *</label>
-            <input type="number" [(ngModel)]="cotizacionForm.cantidad" placeholder="0">
-          </div>
-
-          <div class="form-field">
-            <label>Precio Unitario (S/) *</label>
-            <input type="number" [(ngModel)]="cotizacionForm.precio_unitario" placeholder="0.00">
-          </div>
-
-          <div class="form-field full">
-            <label>Regla de descuento automática</label>
-            <div class="td-sub">
-              10 a 49 unidades: 5% | 50 a 99 unidades: 7% | 100 a más: 10%
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="guardar()">Registrar Cotización</button>
-        </div>
-      </div>
-      <!-- ── VER COTIZACIÓN ── -->
-      <div *ngIf="modalTipo === 'cotizacion' && modalMode === 'ver'" class="modal-body">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <div class="detail-label">Código</div>
-            <div class="detail-val">{{ cotizacionForm.codigo }}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Cliente</div>
-            <div class="detail-val">{{ cotizacionForm.cliente }}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">RUC</div>
-            <div class="detail-val">{{ cotizacionForm.ruc || '—' }}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Producto</div>
-            <div class="detail-val">{{ cotizacionForm.producto }}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Cantidad</div>
-            <div class="detail-val">{{ cotizacionForm.cantidad }}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Precio Unitario</div>
-            <div class="detail-val">{{ formatMoney(+cotizacionForm.precio_unitario!) }}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Subtotal</div>
-            <div class="detail-val">{{ formatMoney(+cotizacionForm.subtotal!) }}</div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Descuento</div>
-            <div class="detail-val">
-              {{ cotizacionForm.descuento_porcentaje }}% -
-              {{ formatMoney(+cotizacionForm.descuento_monto!) }}
-            </div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Total</div>
-            <div class="detail-val"><strong>{{ formatMoney(+cotizacionForm.total!) }}</strong></div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-label">Estado</div>
-            <div class="detail-val">
-              <span class="badge" [class]="getBadgeClass(cotizacionForm.estado || '')">
-                {{ cotizacionForm.estado }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
-        </div>
-      </div>
-      <!-- ── FORM: PRODUCTO ── -->
-      <div *ngIf="modalTipo === 'producto'" class="modal-body">
-        <div class="form-grid">
-          <div class="form-field">
-            <label>Código *</label>
-            <input type="text" [(ngModel)]="productoForm.codigo" placeholder="Ej: ACE-002">
-          </div>
-          <div class="form-field">
-            <label>Nombre *</label>
-            <input type="text" [(ngModel)]="productoForm.nombre" placeholder="Nombre del producto">
-          </div>
-          <div class="form-field full">
-            <label>Descripción</label>
-            <input type="text" [(ngModel)]="productoForm.descripcion" placeholder="Descripción breve">
-          </div>
-          <div class="form-field">
-            <label>Categoría</label>
-            <select [(ngModel)]="productoForm.categoria">
-              <option>Acero Estructural</option><option>Barras Corrugadas</option>
-              <option>Perfiles Laminados</option><option>Alambres</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label>Ubicación</label>
-            <input type="text" [(ngModel)]="productoForm.ubicacion" placeholder="Ej: Nave A-3">
-          </div>
-          <div class="form-field">
-            <label>Stock (TM)</label>
-            <input type="number" [(ngModel)]="productoForm.stock" placeholder="0">
-          </div>
-          <div class="form-field">
-            <label>Stock Mínimo (TM)</label>
-            <input type="number" [(ngModel)]="productoForm.minimo" placeholder="0">
-          </div>
-          <div class="form-field">
-            <label>Valor Unitario (S/)</label>
-            <input type="number" [(ngModel)]="productoForm.valorUnit" placeholder="0.00">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="guardar()">{{ modalMode === 'crear' ? 'Agregar Producto' : 'Guardar Cambios' }}</button>
-        </div>
-      </div>
-
-      <!-- ── FORM: DESPACHO ── -->
-      <div *ngIf="modalTipo === 'despacho'" class="modal-body">
-        <div class="form-grid">
-          <div class="form-field">
-            <label>Cliente *</label>
-            <input type="text" [(ngModel)]="despachoForm.cliente" placeholder="Nombre del cliente">
-          </div>
-          <div class="form-field">
-            <label>Producto *</label>
-            <input type="text" [(ngModel)]="despachoForm.producto" placeholder="Producto a despachar">
-          </div>
-          <div class="form-field full">
-            <label>Dirección de Entrega</label>
-            <input type="text" [(ngModel)]="despachoForm.direccion" placeholder="Dirección completa">
-          </div>
-          <div class="form-field">
-            <label>Peso</label>
-            <input type="text" [(ngModel)]="despachoForm.peso" placeholder="Ej: 12 TM">
-          </div>
-          <div class="form-field">
-            <label>Transportista</label>
-            <input type="text" [(ngModel)]="despachoForm.transportista" placeholder="Empresa transportista">
-          </div>
-          <div class="form-field">
-            <label>Estado</label>
-            <select [(ngModel)]="despachoForm.estado">
-              <option>Pendiente</option><option>Enviado</option><option>Entregado</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="guardar()">{{ modalMode === 'crear' ? 'Registrar Despacho' : 'Guardar Cambios' }}</button>
-        </div>
-      </div>
-
-      <!-- ── FORM: ORDEN ── -->
-      <div *ngIf="modalTipo === 'orden'" class="modal-body">
-        <div class="form-grid">
-          <div class="form-field">
-            <label>Proveedor *</label>
-            <input type="text" [(ngModel)]="ordenForm.proveedor" placeholder="Nombre del proveedor">
-          </div>
-          <div class="form-field">
-            <label>Origen</label>
-            <input type="text" [(ngModel)]="ordenForm.origen" placeholder="Ciudad, País">
-          </div>
-          <div class="form-field">
-            <label>Producto *</label>
-            <input type="text" [(ngModel)]="ordenForm.producto" placeholder="Producto a comprar">
-          </div>
-          <div class="form-field">
-            <label>Cantidad</label>
-            <input type="text" [(ngModel)]="ordenForm.cantidad" placeholder="Ej: 50 TM">
-          </div>
-          <div class="form-field">
-            <label>Total (S/)</label>
-            <input type="number" [(ngModel)]="ordenForm.total" placeholder="0.00">
-          </div>
-          <div class="form-field">
-            <label>Fecha de Entrega</label>
-            <input type="text" [(ngModel)]="ordenForm.fechaEntrega" placeholder="Ej: 30 Ago 2025">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="guardar()">{{ modalMode === 'crear' ? 'Crear Orden' : 'Guardar Cambios' }}</button>
-        </div>
-      </div>
-
-      <!-- ── FORM: PROVEEDOR ── -->
-      <div *ngIf="modalTipo === 'proveedor' && modalMode !== 'ver'" class="modal-body">
-        <div class="form-grid">
-          <div class="form-field">
-            <label>Nombre *</label>
-            <input type="text" [(ngModel)]="proveedorForm.nombre" placeholder="Nombre de la empresa">
-          </div>
-          <div class="form-field">
-            <label>RUC / NIT *</label>
-            <input type="text" [(ngModel)]="proveedorForm.ruc" placeholder="RUC o NIT">
-          </div>
-          <div class="form-field">
-            <label>Origen</label>
-            <input type="text" [(ngModel)]="proveedorForm.origen" placeholder="Ciudad, País">
-          </div>
-          <div class="form-field">
-            <label>Contacto</label>
-            <input type="text" [(ngModel)]="proveedorForm.contacto" placeholder="Nombre del contacto">
-          </div>
-          <div class="form-field">
-            <label>Teléfono</label>
-            <input type="text" [(ngModel)]="proveedorForm.telefono" placeholder="+51 ...">
-          </div>
-          <div class="form-field">
-            <label>Categoría</label>
-            <input type="text" [(ngModel)]="proveedorForm.categoria" placeholder="Ej: Acero primario">
-          </div>
-          <div class="form-field">
-            <label>Calificación (1-5)</label>
-            <input type="number" min="1" max="5" step="0.1" [(ngModel)]="proveedorForm.calificacion">
-          </div>
-          <div class="form-field">
-            <label>Estado</label>
-            <select [(ngModel)]="proveedorForm.estado">
-              <option>Activo</option><option>Inactivo</option>
-            </select>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="guardar()">{{ modalMode === 'crear' ? 'Agregar Proveedor' : 'Guardar Cambios' }}</button>
-        </div>
-      </div>
-
-      <!-- ── VER PROVEEDOR ── -->
-      <div *ngIf="modalTipo === 'proveedor' && modalMode === 'ver'" class="modal-body">
-        <div class="detail-grid">
-          <div class="detail-item"><div class="detail-label">Nombre</div><div class="detail-val">{{ proveedorForm.nombre }}</div></div>
-          <div class="detail-item"><div class="detail-label">RUC / NIT</div><div class="detail-val">{{ proveedorForm.ruc }}</div></div>
-          <div class="detail-item"><div class="detail-label">Origen</div><div class="detail-val">{{ proveedorForm.origen }}</div></div>
-          <div class="detail-item"><div class="detail-label">Contacto</div><div class="detail-val">{{ proveedorForm.contacto }}</div></div>
-          <div class="detail-item"><div class="detail-label">Teléfono</div><div class="detail-val">{{ proveedorForm.telefono }}</div></div>
-          <div class="detail-item"><div class="detail-label">Categoría</div><div class="detail-val">{{ proveedorForm.categoria }}</div></div>
-          <div class="detail-item"><div class="detail-label">Calificación</div><div class="detail-val" style="color:#38A169;font-weight:700">★ {{ proveedorForm.calificacion }}</div></div>
-          <div class="detail-item"><div class="detail-label">Estado</div><div class="detail-val"><span class="badge" [class]="getBadgeClass(proveedorForm.estado || '')">{{ proveedorForm.estado }}</span></div></div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
-          <button class="btn btn-primary" (click)="openModal('proveedor','editar',proveedorForm)">Editar</button>
-        </div>
-      </div>
-
-      <!-- ── FORM: EMPLEADO ── -->
-      <div *ngIf="modalTipo === 'empleado'" class="modal-body">
-        <div class="form-grid">
-          <div class="form-field">
-            <label>Nombre Completo *</label>
-            <input type="text" [(ngModel)]="empleadoForm.nombre" placeholder="Nombre y apellido">
-          </div>
-          <div class="form-field">
-            <label>Cargo</label>
-            <input type="text" [(ngModel)]="empleadoForm.cargo" placeholder="Cargo o puesto">
-          </div>
-          <div class="form-field">
-            <label>Área</label>
-            <select [(ngModel)]="empleadoForm.area">
-              <option>Planta</option><option>Comercial</option><option>Logística</option>
-              <option>Finanzas</option><option>Administración</option>
-            </select>
-          </div>
-          <div class="form-field" *ngIf="modalMode === 'editar'">
-            <label>Asistencia</label>
-            <select [(ngModel)]="empleadoForm.asistencia">
-              <option>Presente</option><option>Tardanza</option><option>Ausente</option>
-            </select>
-          </div>
-          <div class="form-field" *ngIf="modalMode === 'editar'">
-            <label>Observación</label>
-            <input type="text" [(ngModel)]="empleadoForm.observacion" placeholder="Ej: Licencia médica">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="guardar()">{{ modalMode === 'crear' ? 'Registrar Empleado' : 'Guardar Cambios' }}</button>
-        </div>
-      </div>
-
-    </div><!-- /modal-box -->
-  </div><!-- /modal-overlay -->
-
-  <!-- ═══════════════════════════════════════════════════════ TOAST -->
+  <!-- TOAST -->
   <div class="toast" [class.visible]="toastVisible" [class.toast-error]="toastType==='error'" [class.toast-info]="toastType==='info'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18">
       <ng-container *ngIf="toastType==='success'"><polyline points="20 6 9 17 4 12"/></ng-container>

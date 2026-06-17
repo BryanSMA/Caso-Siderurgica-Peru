@@ -1,0 +1,88 @@
+<div class="page-header">
+  <div class="page-header-left"><h2>Gestión de Abastecimiento</h2><p>Órdenes de compra y control de proveedores</p></div>
+  <div class="page-header-right">
+    <button class="btn btn-primary" (click)="openModalCrear()">+ Nueva Orden de Compra</button>
+  </div>
+</div>
+
+<div class="summary-strip">
+  <div class="summary-item"><div class="val">{{ ordenes.length }}</div><div class="lbl">Órdenes Activas</div></div>
+  <div class="summary-item"><div class="val" style="color:#DD6B20">{{ ordenes.filter(o=>o.estado==='Pendiente').length }}</div><div class="lbl">Pendientes Aprobación</div></div>
+  <div class="summary-item"><div class="val">S/ 2.1M</div><div class="lbl">Comprometido</div></div>
+</div>
+
+<div class="table-card">
+  <div class="filters-row">
+    <div class="search-input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Buscar orden o proveedor..." [(ngModel)]="abastSearch">
+    </div>
+    <select class="filter-select" [(ngModel)]="abastFiltroEstado">
+      <option value="">Todos los estados</option>
+      <option>Aprobada</option><option>Pendiente</option><option>En tránsito</option>
+    </select>
+  </div>
+  <table>
+    <thead><tr><th>Orden</th><th>Proveedor</th><th>Producto</th><th>Cantidad</th><th>Total</th><th>Fecha Entrega</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <tbody>
+      <tr *ngFor="let o of ordenesFiltradas">
+        <td>{{ o.id }}</td>
+        <td><div class="td-main">{{ o.proveedor }}</div><div class="td-sub">{{ o.origen }}</div></td>
+        <td>{{ o.producto }}</td>
+        <td>{{ o.cantidad }}</td>
+        <td>{{ formatMoney(o.total) }}</td>
+        <td>{{ o.fechaEntrega }}</td>
+        <td>
+          <div class="estado-dropdown">
+            <span class="badge" [class]="getBadgeClass(o.estado)" style="cursor:pointer">{{ o.estado }} ▾</span>
+            <div class="estado-menu">
+              <div (click)="cambiarEstado(o,'Aprobada')">✓ Aprobada</div>
+              <div (click)="cambiarEstado(o,'Pendiente')">⏳ Pendiente</div>
+              <div (click)="cambiarEstado(o,'En tránsito')">🚚 En tránsito</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="action-col">
+            <button class="btn btn-secondary btn-sm" (click)="openModalEditar(o)">Editar</button>
+            <button class="btn btn-danger btn-sm" (click)="pedirEliminar(o)">✕</button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="ordenesFiltradas.length === 0"><td colspan="8" class="empty-row">No se encontraron resultados</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ modalMode === 'eliminar' ? 'Confirmar Eliminación' : modalMode === 'crear' ? 'Nueva Orden de Compra' : 'Editar Orden' }}</h3>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+    <div *ngIf="modalMode !== 'eliminar'" class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Proveedor *</label><input type="text" [(ngModel)]="ordenForm.proveedor" placeholder="Nombre del proveedor"></div>
+        <div class="form-field"><label>Origen</label><input type="text" [(ngModel)]="ordenForm.origen" placeholder="Ciudad, País"></div>
+        <div class="form-field"><label>Producto *</label><input type="text" [(ngModel)]="ordenForm.producto" placeholder="Producto a comprar"></div>
+        <div class="form-field"><label>Cantidad</label><input type="text" [(ngModel)]="ordenForm.cantidad" placeholder="Ej: 50 TM"></div>
+        <div class="form-field"><label>Total (S/)</label><input type="number" [(ngModel)]="ordenForm.total" placeholder="0.00"></div>
+        <div class="form-field"><label>Fecha de Entrega</label><input type="text" [(ngModel)]="ordenForm.fechaEntrega" placeholder="Ej: 30 Ago 2025"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardarOrden()">{{ modalMode === 'crear' ? 'Crear Orden' : 'Guardar Cambios' }}</button>
+      </div>
+    </div>
+    <div *ngIf="modalMode === 'eliminar'" class="modal-body">
+      <div class="delete-warning"><div class="delete-icon">⚠️</div><p>¿Está seguro?<br><strong>Esta acción no se puede deshacer.</strong></p></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-danger" (click)="confirmarEliminar()">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" [class.visible]="toastVisible" [class.toast-error]="toastType==='error'">{{ toastMsg }}</div>

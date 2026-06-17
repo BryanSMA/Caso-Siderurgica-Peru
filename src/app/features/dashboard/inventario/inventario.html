@@ -1,0 +1,133 @@
+<div class="page-header">
+  <div class="page-header-left">
+    <h2>Gestión de Inventario</h2>
+    <p>Control de stock y productos en almacén</p>
+  </div>
+  <div class="page-header-right">
+    <button class="btn btn-secondary" (click)="cargarInventario()">Actualizar</button>
+    <button class="btn btn-primary" (click)="openModalCrear()">+ Agregar Producto</button>
+  </div>
+</div>
+
+<div class="summary-strip">
+  <div class="summary-item">
+    <div class="val">{{ inventarioBD.length }}</div>
+    <div class="lbl">Total SKUs</div>
+  </div>
+  <div class="summary-item">
+    <div class="val" style="color:#E53E3E">{{ alertasBajoStock }}</div>
+    <div class="lbl">Stock Crítico</div>
+  </div>
+  <div class="summary-item">
+    <div class="val">{{ formatMoney(valorTotalInventario) }}</div>
+    <div class="lbl">Valor Total Inventario</div>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="filters-row">
+    <div class="search-input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" placeholder="Buscar producto..." [(ngModel)]="inventarioSearch">
+    </div>
+    <select class="filter-select" [(ngModel)]="inventarioFiltroEstado">
+      <option value="">Todos los estados</option>
+      <option>Normal</option>
+      <option>Bajo stock</option>
+      <option>Sin stock</option>
+    </select>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Producto</th><th>Categoría</th>
+        <th>Stock</th><th>Mínimo</th><th>Precio Unit.</th>
+        <th>Estado</th><th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of inventarioBDFiltrado">
+        <td>{{ p.id }}</td>
+        <td><div class="td-main">{{ p.producto }}</div></td>
+        <td>{{ p.categoria || '—' }}</td>
+        <td>
+          <span [style.color]="p.stock === 0 ? '#E53E3E' : p.stock <= (p.stockMinimo||0) ? '#DD6B20' : '#38A169'"
+                style="font-weight:700">
+            {{ p.stock }} {{ p.unidad }}
+          </span>
+        </td>
+        <td>{{ p.stockMinimo }}</td>
+        <td>{{ p.precioUnitario ? formatMoney(p.precioUnitario) : '—' }}</td>
+        <td>
+          <span class="badge" [class]="getBadgeClass(getEstadoInventario(p))">
+            {{ getEstadoInventario(p) }}
+          </span>
+        </td>
+        <td>
+          <div class="action-col">
+            <button class="btn btn-secondary btn-sm" (click)="openModalEditar(p)">Editar</button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="loadingInventario">
+        <td colspan="8" class="empty-row">Cargando inventario...</td>
+      </tr>
+      <tr *ngIf="!loadingInventario && inventarioBDFiltrado.length === 0">
+        <td colspan="8" class="empty-row">No se encontraron productos</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ modalMode === 'crear' ? 'Agregar Producto' : 'Editar Producto' }}</h3>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label>Producto *</label>
+          <input type="text" [(ngModel)]="inventarioForm.producto" placeholder="Nombre del producto">
+        </div>
+        <div class="form-field">
+          <label>Categoría</label>
+          <input type="text" [(ngModel)]="inventarioForm.categoria" placeholder="Ej: Acero">
+        </div>
+        <div class="form-field">
+          <label>Unidad</label>
+          <input type="text" [(ngModel)]="inventarioForm.unidad" placeholder="Ej: unidad, kg, tonelada">
+        </div>
+        <div class="form-field">
+          <label>Stock inicial</label>
+          <input type="number" [(ngModel)]="inventarioForm.stock" placeholder="0">
+        </div>
+        <div class="form-field">
+          <label>Stock mínimo</label>
+          <input type="number" [(ngModel)]="inventarioForm.stockMinimo" placeholder="10">
+        </div>
+        <div class="form-field">
+          <label>Precio unitario (S/)</label>
+          <input type="number" [(ngModel)]="inventarioForm.precioUnitario" placeholder="0.00">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardarInventario()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : (modalMode === 'crear' ? 'Agregar Producto' : 'Guardar Cambios') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" [class.visible]="toastVisible" [class.toast-error]="toastType==='error'">
+  {{ toastMsg }}
+</div>

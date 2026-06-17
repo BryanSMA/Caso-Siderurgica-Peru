@@ -1,0 +1,92 @@
+<div class="page-header">
+  <div class="page-header-left"><h2>Gestión de Recursos Humanos</h2><p>Control de asistencia, tardanzas y personal</p></div>
+  <div class="page-header-right">
+    <button class="btn btn-secondary">Exportar Reporte</button>
+    <button class="btn btn-primary" (click)="openModalCrear()">+ Nuevo Empleado</button>
+  </div>
+</div>
+
+<div class="summary-strip">
+  <div class="summary-item"><div class="val">{{ empleados.length }}</div><div class="lbl">Total Empleados</div></div>
+  <div class="summary-item"><div class="val" style="color:#38A169">{{ empleados.filter(e=>e.asistencia==='Presente').length }}</div><div class="lbl">Presentes Hoy</div></div>
+  <div class="summary-item"><div class="val" style="color:#E53E3E">{{ empleados.filter(e=>e.asistencia!=='Presente').length }}</div><div class="lbl">Ausentes / Tardanzas</div></div>
+</div>
+
+<div class="table-card">
+  <div class="table-card-header">
+    <div><div class="table-card-title">Registro de Asistencia</div><div class="table-card-sub">Lunes 21 de julio de 2025</div></div>
+    <select class="filter-select" [(ngModel)]="rrhhFiltroArea">
+      <option value="">Todas las áreas</option>
+      <option *ngFor="let a of areasUnicas()">{{ a }}</option>
+    </select>
+  </div>
+  <table>
+    <thead><tr><th>Empleado</th><th>Cargo</th><th>Área</th><th>Hora Entrada</th><th>Tardanza</th><th>Asistencia</th><th>Observación</th><th>Acciones</th></tr></thead>
+    <tbody>
+      <tr *ngFor="let e of empleadosFiltrados">
+        <td>
+          <div class="emp-row">
+            <div class="emp-avatar" [style.background]="e.color">{{ e.iniciales }}</div>
+            <div><div class="td-main">{{ e.nombre }}</div><div class="td-sub">ID: {{ e.id }}</div></div>
+          </div>
+        </td>
+        <td>{{ e.cargo }}</td><td>{{ e.area }}</td><td>{{ e.horaEntrada }}</td><td>{{ e.tardanza }}</td>
+        <td>
+          <div class="estado-dropdown">
+            <span class="badge" [class]="getBadgeClass(e.asistencia)" style="cursor:pointer">{{ e.asistencia }} ▾</span>
+            <div class="estado-menu">
+              <div (click)="cambiarAsistencia(e,'Presente')">✓ Presente</div>
+              <div (click)="cambiarAsistencia(e,'Tardanza')">⏰ Tardanza</div>
+              <div (click)="cambiarAsistencia(e,'Ausente')">✗ Ausente</div>
+            </div>
+          </div>
+        </td>
+        <td>{{ e.observacion }}</td>
+        <td>
+          <div class="action-col">
+            <button class="btn btn-secondary btn-sm" (click)="openModalEditar(e)">Editar</button>
+            <button class="btn btn-danger btn-sm" (click)="pedirEliminar(e)">✕</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ modalMode === 'crear' ? 'Nuevo Empleado' : modalMode === 'editar' ? 'Editar Empleado' : 'Confirmar Eliminación' }}</h3>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+    <div *ngIf="modalMode !== 'eliminar'" class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label>Nombre Completo *</label><input type="text" [(ngModel)]="empleadoForm.nombre" placeholder="Nombre y apellido"></div>
+        <div class="form-field"><label>Cargo</label><input type="text" [(ngModel)]="empleadoForm.cargo" placeholder="Cargo o puesto"></div>
+        <div class="form-field"><label>Área</label>
+          <select [(ngModel)]="empleadoForm.area">
+            <option>Planta</option><option>Comercial</option><option>Logística</option><option>Finanzas</option><option>Administración</option>
+          </select>
+        </div>
+        <div class="form-field" *ngIf="modalMode === 'editar'"><label>Asistencia</label>
+          <select [(ngModel)]="empleadoForm.asistencia"><option>Presente</option><option>Tardanza</option><option>Ausente</option></select>
+        </div>
+        <div class="form-field" *ngIf="modalMode === 'editar'"><label>Observación</label><input type="text" [(ngModel)]="empleadoForm.observacion" placeholder="Ej: Licencia médica"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="guardarEmpleado()">{{ modalMode === 'crear' ? 'Registrar Empleado' : 'Guardar Cambios' }}</button>
+      </div>
+    </div>
+    <div *ngIf="modalMode === 'eliminar'" class="modal-body">
+      <div class="delete-warning"><div class="delete-icon">⚠️</div><p>¿Está seguro?<br><strong>Esta acción no se puede deshacer.</strong></p></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-danger" (click)="confirmarEliminar()">Sí, eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" [class.visible]="toastVisible" [class.toast-error]="toastType==='error'">{{ toastMsg }}</div>

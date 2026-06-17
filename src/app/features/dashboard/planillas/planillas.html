@@ -1,0 +1,81 @@
+<div class="page-header">
+  <div class="page-header-left"><h2>Gestión de Planillas</h2><p>Control salarial y pagos — Periodo: Julio 2025</p></div>
+  <div class="page-header-right">
+    <button class="btn btn-secondary">Generar PDF</button>
+    <button class="btn btn-primary">Procesar Planilla</button>
+  </div>
+</div>
+
+<div class="summary-strip">
+  <div class="summary-item"><div class="val">S/ 842K</div><div class="lbl">Total Planilla Mensual</div></div>
+  <div class="summary-item"><div class="val" style="color:#38A169">{{ planillas.filter(p=>p.estado==='Pagado').length }}</div><div class="lbl">Pagos Procesados</div></div>
+  <div class="summary-item"><div class="val" style="color:#DD6B20">{{ planillas.filter(p=>p.estado==='Pendiente').length }}</div><div class="lbl">Pendientes</div></div>
+</div>
+
+<div class="table-card">
+  <div class="table-card-header"><div class="table-card-title">Detalle de Planilla</div></div>
+  <table>
+    <thead><tr><th>Empleado</th><th>Cargo</th><th>Salario Base</th><th>Descuentos</th><th>Bonos</th><th>Total Neto</th><th>Estado Pago</th><th>Acción</th></tr></thead>
+    <tbody>
+      <tr *ngFor="let p of planillas">
+        <td>
+          <div class="emp-row">
+            <div class="emp-avatar" [style.background]="p.color">{{ p.iniciales }}</div>
+            <span>{{ p.nombre }}</span>
+          </div>
+        </td>
+        <td>{{ p.cargo }}</td>
+        <td>{{ formatMoney(p.salarioBase) }}</td>
+        <td style="color:#E53E3E">{{ formatMoney(p.descuentos) }}</td>
+        <td style="color:#38A169">{{ formatMoney(p.bonos) }}</td>
+        <td><strong>{{ formatMoney(getTotalNeto(p)) }}</strong></td>
+        <td><span class="badge" [class]="getBadgeClass(p.estado)">{{ p.estado }}</span></td>
+        <td>
+          <div class="action-col">
+            <button class="btn btn-ghost btn-sm" (click)="verBoleta(p)">Boleta</button>
+            <button class="btn btn-primary btn-sm" *ngIf="p.estado==='Pendiente'" (click)="procesarPago(p)">Pagar</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL BOLETA -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Boleta de Pago — {{ boletaEmpleado?.nombre }}</h3>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+    <div *ngIf="boletaEmpleado" class="modal-body">
+      <div class="boleta">
+        <div class="boleta-header">
+          <div class="boleta-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1A365D" stroke-width="2" width="28"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div><div style="font-weight:800;font-size:16px;color:#1A365D">Siderúrgica Perú S.A.C.</div><div style="font-size:12px;color:#718096">Boleta de Pago — Julio 2025</div></div>
+        </div>
+        <div class="boleta-empleado">
+          <div class="emp-avatar" [style.background]="boletaEmpleado.color" style="width:48px;height:48px;font-size:18px">{{ boletaEmpleado.iniciales }}</div>
+          <div><div style="font-weight:700;font-size:16px">{{ boletaEmpleado.nombre }}</div><div style="color:#718096">{{ boletaEmpleado.cargo }}</div></div>
+        </div>
+        <div class="boleta-rows">
+          <div class="boleta-row"><span>Salario Base</span><span>{{ formatMoney(boletaEmpleado.salarioBase) }}</span></div>
+          <div class="boleta-row"><span>Bonificaciones</span><span style="color:#38A169">+ {{ formatMoney(boletaEmpleado.bonos) }}</span></div>
+          <div class="boleta-row"><span>Descuentos (AFP + ES Salud)</span><span style="color:#E53E3E">- {{ formatMoney(boletaEmpleado.descuentos) }}</span></div>
+          <div class="boleta-row boleta-total"><span>Total Neto</span><span>{{ formatMoney(getTotalNeto(boletaEmpleado)) }}</span></div>
+        </div>
+        <div style="text-align:center;margin-top:16px">
+          <span class="badge" [class]="getBadgeClass(boletaEmpleado.estado)">{{ boletaEmpleado.estado }}</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
+        <button class="btn btn-primary">Descargar PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" [class.visible]="toastVisible" [class.toast-error]="toastType==='error'">{{ toastMsg }}</div>
