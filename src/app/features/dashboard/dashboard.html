@@ -145,7 +145,7 @@
             </div>
             <div class="notif-list">
               <div class="notif-item" *ngFor="let n of notificaciones"
-                   [class.no-leida]="!n.leida" (click)="marcarLeida(n)">
+     [class.no-leida]="!n.leida" (click)="irANotif(n)" style="cursor:pointer">
                 <div class="notif-icono">{{ n.icono }}</div>
                 <div class="notif-content">
                   <div class="notif-titulo">{{ n.titulo }}</div>
