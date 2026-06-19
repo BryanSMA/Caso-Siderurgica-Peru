@@ -57,7 +57,17 @@ public class Despacho {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Column(length = 300)
+private String comprobante;
 
+@Column(name = "comprobante_validado")
+private Boolean comprobanteValidado = false;
+
+@Column(name = "fecha_validacion_comprobante")
+private LocalDateTime fechaValidacionComprobante;
+
+@Column(name = "fecha_entrega")
+private LocalDateTime fechaEntrega;
     @PrePersist
     protected void onCreate() {
         if (fechaDespacho == null) fechaDespacho = LocalDateTime.now();
