@@ -1,14 +1,13 @@
 <div class="page-header">
   <div class="page-header-left"><h2>Gestión de Despacho</h2><p>Control de envíos y confirmación de entregas</p></div>
-  <div class="page-header-right">
-    <button class="btn btn-primary" (click)="openModalCrear()">+ Nuevo Despacho</button>
-  </div>
+  <div class="page-header-right"><button class="btn btn-primary" (click)="openModalCrear()">+ Nuevo Despacho</button></div>
 </div>
 
 <div class="summary-strip">
-  <div class="summary-item"><div class="val" style="color:#DD6B20">{{ despachos.filter(d=>d.estado==='Pendiente').length }}</div><div class="lbl">Pendientes</div></div>
-  <div class="summary-item"><div class="val" style="color:#2B6CB0">{{ despachos.filter(d=>d.estado==='Enviado').length }}</div><div class="lbl">En Tránsito</div></div>
-  <div class="summary-item"><div class="val" style="color:#38A169">{{ despachos.filter(d=>d.estado==='Entregado').length }}</div><div class="lbl">Entregados</div></div>
+  <div class="summary-item"><div class="val" style="color:#DD6B20">{{ despachos.filter(d=>d.estado==='PENDIENTE').length }}</div><div class="lbl">Pendientes</div></div>
+  <div class="summary-item"><div class="val" style="color:#D69E2E">{{ despachos.filter(d=>d.estado==='PREPARADO').length }}</div><div class="lbl">Preparados</div></div>
+  <div class="summary-item"><div class="val" style="color:#2B6CB0">{{ despachos.filter(d=>d.estado==='ENVIADO').length }}</div><div class="lbl">En Tránsito</div></div>
+  <div class="summary-item"><div class="val" style="color:#38A169">{{ despachos.filter(d=>d.estado==='ENTREGADO').length }}</div><div class="lbl">Entregados</div></div>
 </div>
 
 <div class="table-card">
@@ -18,81 +17,81 @@
       <input type="text" placeholder="Buscar por cliente o guía..." [(ngModel)]="despachoSearch">
     </div>
     <select class="filter-select" [(ngModel)]="despachoFiltroEstado">
-      <option value="">Todos</option><option>Pendiente</option><option>Enviado</option><option>Entregado</option>
+      <option value="">Todos</option>
+      <option value="PENDIENTE">Pendiente</option>
+      <option value="PREPARADO">Preparado</option>
+      <option value="ENVIADO">Enviado</option>
+      <option value="ENTREGADO">Entregado</option>
     </select>
   </div>
   <table>
     <thead><tr><th>Guía</th><th>Cliente</th><th>Dirección</th><th>Producto</th><th>Peso</th><th>Transportista</th><th>Estado</th><th>Acciones</th></tr></thead>
     <tbody>
       <tr *ngFor="let d of despachosFiltrados">
-        <td>{{ d.guia }}</td>
+        <td>{{ d.codigo }}</td>
         <td><div class="td-main">{{ d.cliente }}</div></td>
         <td>{{ d.direccion }}</td>
         <td>{{ d.producto }}</td>
         <td>{{ d.peso }}</td>
         <td>{{ d.transportista }}</td>
-        <td>
-          <div class="estado-dropdown">
-            <span class="badge" [class]="getBadgeClass(d.estado)" style="cursor:pointer">{{ d.estado }} ▾</span>
-            <div class="estado-menu">
-              <div (click)="cambiarEstado(d,'Pendiente')">⏳ Pendiente</div>
-              <div (click)="cambiarEstado(d,'Enviado')">🚚 Enviado</div>
-              <div (click)="confirmarEntrega(d)">✓ Entregado</div>
-            </div>
-          </div>
-        </td>
+        <td><span class="badge" [class]="getBadgeClass(d.estado)">{{ d.estado }}</span></td>
         <td>
           <div class="action-col">
-            <button class="btn btn-success btn-sm" *ngIf="d.estado !== 'Entregado'" (click)="confirmarEntrega(d)">✓ Confirmar</button>
-            <button class="btn btn-secondary btn-sm" (click)="openModalEditar(d)">Editar</button>
+            <button class="btn btn-secondary btn-sm" *ngIf="d.estado === 'PENDIENTE'" (click)="preparar(d)">Preparar</button>
+            <button class="btn btn-secondary btn-sm" *ngIf="(d.estado === 'PREPARADO' || d.estado === 'ENVIADO') && !d.comprobanteValidado" (click)="abrirComprobante(d)">Validar Comprobante</button>
+            <button class="btn btn-success btn-sm" *ngIf="d.estado !== 'ENTREGADO' && d.comprobanteValidado" (click)="confirmarEntrega(d)">✓ Confirmar Entrega</button>
+            <button class="btn btn-ghost btn-sm" (click)="openModalEditar(d)">Editar</button>
             <button class="btn btn-danger btn-sm" (click)="pedirEliminar(d)">✕</button>
           </div>
         </td>
       </tr>
-      <tr *ngIf="despachosFiltrados.length === 0">
-        <td colspan="8" class="empty-row">No se encontraron resultados</td>
-      </tr>
+      <tr *ngIf="despachosFiltrados.length === 0"><td colspan="8" class="empty-row">No se encontraron resultados</td></tr>
     </tbody>
   </table>
 </div>
 
-<!-- MODAL -->
 <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>{{ modalMode === 'crear' ? 'Nuevo Despacho' : modalMode === 'editar' ? 'Editar Despacho' : 'Confirmar Eliminación' }}</h3>
-      <button class="modal-close" (click)="closeModal()">✕</button>
-    </div>
 
-    <div *ngIf="modalMode === 'crear' || modalMode === 'editar'" class="modal-body">
-      <div class="form-grid">
-        <div class="form-field"><label>Cliente *</label><input type="text" [(ngModel)]="despachoForm.cliente" placeholder="Nombre del cliente"></div>
-        <div class="form-field"><label>Producto *</label><input type="text" [(ngModel)]="despachoForm.producto" placeholder="Producto a despachar"></div>
-        <div class="form-field full"><label>Dirección de Entrega</label><input type="text" [(ngModel)]="despachoForm.direccion" placeholder="Dirección completa"></div>
-        <div class="form-field"><label>Peso</label><input type="text" [(ngModel)]="despachoForm.peso" placeholder="Ej: 12 TM"></div>
-        <div class="form-field"><label>Transportista</label><input type="text" [(ngModel)]="despachoForm.transportista" placeholder="Empresa transportista"></div>
-        <div class="form-field"><label>Estado</label>
-          <select [(ngModel)]="despachoForm.estado">
-            <option>Pendiente</option><option>Enviado</option><option>Entregado</option>
-          </select>
+    <div *ngIf="modalMode === 'crear' || modalMode === 'editar'">
+      <div class="modal-header"><h3>{{ modalMode === 'crear' ? 'Nuevo Despacho' : 'Editar Despacho' }}</h3><button class="modal-close" (click)="closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-field"><label>Cliente *</label><input type="text" [(ngModel)]="despachoForm.cliente" placeholder="Nombre del cliente"></div>
+          <div class="form-field"><label>Producto *</label><input type="text" [(ngModel)]="despachoForm.producto" placeholder="Producto a despachar"></div>
+          <div class="form-field full"><label>Dirección de Entrega</label><input type="text" [(ngModel)]="despachoForm.direccion" placeholder="Dirección completa"></div>
+          <div class="form-field"><label>Peso</label><input type="text" [(ngModel)]="despachoForm.peso" placeholder="Ej: 12 TM"></div>
+          <div class="form-field"><label>Transportista</label><input type="text" [(ngModel)]="despachoForm.transportista" placeholder="Empresa transportista"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" (click)="guardarDespacho()">{{ modalMode === 'crear' ? 'Registrar Despacho' : 'Guardar Cambios' }}</button>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button class="btn btn-primary" (click)="guardarDespacho()">{{ modalMode === 'crear' ? 'Registrar Despacho' : 'Guardar Cambios' }}</button>
+    </div>
+
+    <div *ngIf="modalMode === 'comprobante'">
+      <div class="modal-header"><h3>Validar Comprobante — {{ despachoActivo?.codigo }}</h3><button class="modal-close" (click)="closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="form-field full"><label>Código / Referencia de comprobante *</label><input type="text" [(ngModel)]="comprobanteTexto" placeholder="Ej: guía firmada, foto, código"></div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" (click)="validarComprobante()">Validar</button>
+        </div>
       </div>
     </div>
 
-    <div *ngIf="modalMode === 'eliminar'" class="modal-body">
-      <div class="delete-warning">
-        <div class="delete-icon">⚠️</div>
-        <p>¿Está seguro que desea eliminar este registro?<br><strong>Esta acción no se puede deshacer.</strong></p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button class="btn btn-danger" (click)="confirmarEliminar()">Sí, eliminar</button>
+    <div *ngIf="modalMode === 'eliminar'">
+      <div class="modal-header"><h3>Confirmar Eliminación</h3><button class="modal-close" (click)="closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="delete-warning"><div class="delete-icon">⚠️</div><p>¿Está seguro?<br><strong>Esta acción no se puede deshacer.</strong></p></div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button class="btn btn-danger" (click)="confirmarEliminar()">Sí, eliminar</button>
+        </div>
       </div>
     </div>
+
   </div>
 </div>
 

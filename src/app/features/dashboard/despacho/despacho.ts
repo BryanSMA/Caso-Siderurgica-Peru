@@ -1,10 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DespachoService } from '../../../core/services/despacho.service';
 
 export interface Despacho {
-  guia: string; cliente: string; direccion: string; producto: string;
-  peso: string; transportista: string; estado: 'Entregado' | 'Enviado' | 'Pendiente';
+  id?: number; codigo: string; cliente: string; direccion: string; producto: string;
+  peso: string; transportista: string;
+  estado: 'ENTREGADO' | 'ENVIADO' | 'PREPARADO' | 'PENDIENTE';
+  comprobante?: string; comprobanteValidado?: boolean; pedidoId?: number;
 }
 
 @Component({
@@ -14,73 +17,97 @@ export interface Despacho {
   templateUrl: './despacho.html',
   styles: []
 })
-export class DespachoComponent {
-
-  despachos: Despacho[] = [
-    { guia: '#GUI-1842', cliente: 'Constructora Lima S.A.', direccion: 'Av. Javier Prado 4200', producto: 'Acero A36', peso: '12 TM', transportista: 'Fletes Andes SAC', estado: 'Entregado' },
-    { guia: '#GUI-1841', cliente: 'Minera Andina Corp.', direccion: 'Carretera Central Km 45', producto: 'Barras 3/4"', peso: '5 TM', transportista: 'TransMetro Perú', estado: 'Enviado' },
-    { guia: '#GUI-1840', cliente: 'Infraestructura Sur SAC', direccion: 'Av. Separadora Industrial', producto: 'Perfiles H', peso: '20 TM', transportista: 'Fletes Andes SAC', estado: 'Pendiente' },
-  ];
-
-  despachoSearch = '';
-  despachoFiltroEstado = '';
-  showModal = false;
-  modalMode: 'crear' | 'editar' | 'eliminar' = 'crear';
+export class DespachoComponent implements OnInit {
+  despachos: Despacho[] = [];
+  despachoSearch = ''; despachoFiltroEstado = '';
+  showModal = false; modalMode: 'crear' | 'editar' | 'eliminar' | 'comprobante' = 'crear';
   despachoForm: Partial<Despacho> = {};
+  comprobanteTexto = '';
   deleteTarget: Despacho | null = null;
+  despachoActivo: Despacho | null = null;
   toastMsg = ''; toastType: 'success' | 'error' = 'success'; toastVisible = false;
 
-  get despachosFiltrados(): Despacho[] {
-    return this.despachos.filter(d => {
-      const matchSearch = !this.despachoSearch ||
-        d.cliente.toLowerCase().includes(this.despachoSearch.toLowerCase()) ||
-        d.guia.toLowerCase().includes(this.despachoSearch.toLowerCase());
-      const matchEstado = !this.despachoFiltroEstado || d.estado === this.despachoFiltroEstado;
-      return matchSearch && matchEstado;
-    });
-  }
+  constructor(
+  private despachoService: DespachoService,
+  private cdr: ChangeDetectorRef
+) {}
+  ngOnInit() { this.cargar(); }
+  cargar() {
+  this.despachoService.listar().subscribe((d: any) => {
+    this.despachos = d;
+    this.cdr.detectChanges();
+  });
+}
+
+ get despachosFiltrados(): Despacho[] {
+  return this.despachos.filter(d => {
+    const matchSearch = !this.despachoSearch ||
+      (d.cliente || '').toLowerCase().includes(this.despachoSearch.toLowerCase()) ||
+      (d.codigo || '').toLowerCase().includes(this.despachoSearch.toLowerCase());
+    return matchSearch && (!this.despachoFiltroEstado || d.estado === this.despachoFiltroEstado);
+  });
+}
 
   getBadgeClass(estado: string): string {
-    const map: Record<string, string> = {
-      'Entregado': 'badge-green', 'Enviado': 'badge-blue', 'Pendiente': 'badge-orange'
-    };
+    const map: Record<string,string> = { 'ENTREGADO':'badge-green', 'ENVIADO':'badge-blue', 'PREPARADO':'badge-yellow', 'PENDIENTE':'badge-orange' };
     return map[estado] || 'badge-yellow';
   }
 
-  openModalCrear() { this.modalMode = 'crear'; this.despachoForm = { estado: 'Pendiente' }; this.showModal = true; }
+  openModalCrear() { this.modalMode = 'crear'; this.despachoForm = { estado: 'PENDIENTE' }; this.showModal = true; }
   openModalEditar(d: Despacho) { this.modalMode = 'editar'; this.despachoForm = { ...d }; this.showModal = true; }
   pedirEliminar(d: Despacho) { this.modalMode = 'eliminar'; this.deleteTarget = d; this.showModal = true; }
-  closeModal() { this.showModal = false; this.deleteTarget = null; }
+  closeModal() { this.showModal = false; this.deleteTarget = null; this.despachoActivo = null; }
 
   guardarDespacho() {
-    if (!this.despachoForm.cliente || !this.despachoForm.producto) { this.showToast('Complete los campos requeridos', 'error'); return; }
+    if (!this.despachoForm.cliente || !this.despachoForm.producto) { this.showToast('Complete los campos requeridos','error'); return; }
     if (this.modalMode === 'crear') {
-      const nuevo: Despacho = {
-        guia: `#GUI-${1843 + this.despachos.length}`, cliente: this.despachoForm.cliente!,
-        direccion: this.despachoForm.direccion || '—', producto: this.despachoForm.producto!,
-        peso: this.despachoForm.peso || '—', transportista: this.despachoForm.transportista || '—',
-        estado: 'Pendiente',
-      };
-      this.despachos.unshift(nuevo);
-      this.showToast('Despacho registrado');
+      this.despachoService.crear(this.despachoForm).subscribe({
+        next: () => { this.showToast('Despacho registrado'); this.cargar(); this.closeModal(); },
+        error: () => this.showToast('Error al registrar','error')
+      });
     } else {
-      const idx = this.despachos.findIndex(d => d.guia === this.despachoForm.guia);
-      if (idx !== -1) this.despachos[idx] = { ...this.despachos[idx], ...this.despachoForm } as Despacho;
-      this.showToast('Despacho actualizado');
+      this.despachoService.actualizar(this.despachoForm.id!, this.despachoForm).subscribe({
+        next: () => { this.showToast('Despacho actualizado'); this.cargar(); this.closeModal(); },
+        error: () => this.showToast('Error al actualizar','error')
+      });
     }
-    this.closeModal();
   }
 
-  cambiarEstado(d: Despacho, estado: Despacho['estado']) { d.estado = estado; this.showToast(`Guía ${d.guia} → ${estado}`); }
-  confirmarEntrega(d: Despacho) { d.estado = 'Entregado'; this.showToast(`Entrega confirmada: ${d.guia}`); }
+  preparar(d: Despacho) {
+    if (!d.id) return;
+    this.despachoService.preparar(d.id).subscribe({
+      next: () => { this.showToast(`Guía ${d.codigo} preparada`); this.cargar(); },
+      error: err => this.showToast(err.error?.message || 'Error al preparar','error')
+    });
+  }
+
+  abrirComprobante(d: Despacho) { this.despachoActivo = d; this.comprobanteTexto = ''; this.modalMode = 'comprobante'; this.showModal = true; }
+
+  validarComprobante() {
+    if (!this.despachoActivo?.id || !this.comprobanteTexto.trim()) { this.showToast('Ingrese un código o referencia de comprobante','error'); return; }
+    this.despachoService.validarComprobante(this.despachoActivo.id, this.comprobanteTexto).subscribe({
+      next: () => { this.showToast('Comprobante validado'); this.cargar(); this.closeModal(); },
+      error: err => this.showToast(err.error?.message || 'Error al validar comprobante','error')
+    });
+  }
+
+  confirmarEntrega(d: Despacho) {
+    if (!d.id) return;
+    this.despachoService.confirmarEntrega(d.id).subscribe({
+      next: () => { this.showToast(`Entrega confirmada: ${d.codigo}`); this.cargar(); },
+      error: err => this.showToast(err.error?.message || 'Falta validar comprobante','error')
+    });
+  }
 
   confirmarEliminar() {
-    if (this.deleteTarget) { this.despachos = this.despachos.filter(d => d !== this.deleteTarget); this.showToast('Despacho eliminado'); }
+  if (!this.deleteTarget?.id) return;
+  this.despachoService.eliminar(this.deleteTarget.id).subscribe(() => {
+    this.despachos = this.despachos.filter(d => d !== this.deleteTarget);
+    this.cdr.detectChanges();
+    this.showToast('Despacho eliminado');
     this.closeModal();
-  }
+  });
+}
 
-  showToast(msg: string, type: 'success' | 'error' = 'success') {
-    this.toastMsg = msg; this.toastType = type; this.toastVisible = true;
-    setTimeout(() => this.toastVisible = false, 3000);
-  }
+  showToast(msg: string, type: 'success'|'error' = 'success') { this.toastMsg = msg; this.toastType = type; this.toastVisible = true; setTimeout(() => this.toastVisible = false, 3000); }
 }

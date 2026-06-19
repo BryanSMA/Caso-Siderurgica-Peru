@@ -42,12 +42,12 @@ export class DashboardComponent implements OnInit {
   // Notificaciones
   showNotif = false;
   notificaciones = [
-    { icono: '📦', titulo: 'Stock crítico', msg: 'Alambre galvanizado #16 sin stock', tiempo: 'Hace 5 min', leida: false },
-    { icono: '🚚', titulo: 'Despacho pendiente', msg: 'Guía #GUI-1840 sin confirmar entrega', tiempo: 'Hace 20 min', leida: false },
-    { icono: '💰', titulo: 'Nueva venta', msg: 'Pedido #PED-2847 aprobado por S/ 48,200', tiempo: 'Hace 1 hora', leida: true },
-    { icono: '⚠️', titulo: 'Orden pendiente', msg: 'OC-0420 requiere aprobación', tiempo: 'Hace 2 horas', leida: true },
-    { icono: '👤', titulo: 'Empleado ausente', msg: 'Ana Paredes registró licencia médica', tiempo: 'Hace 3 horas', leida: true },
-  ];
+  { icono: '📦', titulo: 'Stock crítico', msg: 'Alambre galvanizado #16 sin stock', tiempo: 'Hace 5 min', leida: false, link: 'inventario' },
+  { icono: '🚚', titulo: 'Despacho pendiente', msg: 'Guía #GUI-1840 sin confirmar entrega', tiempo: 'Hace 20 min', leida: false, link: 'despacho' },
+  { icono: '💰', titulo: 'Nueva venta', msg: 'Pedido #PED-2847 aprobado por S/ 48,200', tiempo: 'Hace 1 hora', leida: true, link: 'ventas' },
+  { icono: '⚠️', titulo: 'Orden pendiente', msg: 'OC-0420 requiere aprobación', tiempo: 'Hace 2 horas', leida: true, link: 'abastecimiento' },
+  { icono: '👤', titulo: 'Empleado ausente', msg: 'Ana Paredes registró licencia médica', tiempo: 'Hace 3 horas', leida: true, link: 'rrhh' },
+];
 
   permisosPorRol: Record<string, string[]> = {
     ADMIN:    ['dashboard','ventas','cotizaciones','pedidos','despacho','inventario','abastecimiento','proveedores','rrhh','planillas','reportes','mantenimiento'],
@@ -67,6 +67,13 @@ export class DashboardComponent implements OnInit {
     this.usuarioActual = this.authService.getUser();
     this.rolActual = this.authService.getRol();
   }
+  irANotif(n: any) {
+  n.leida = true;
+  this.showNotif = false;
+  if (n.link && this.puedeVer(n.link)) {
+    this.activeView = n.link;
+  }
+}
 
   // ── Permisos ──
   puedeVer(view: string): boolean {
