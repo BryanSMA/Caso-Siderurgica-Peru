@@ -39,6 +39,9 @@ public class SecurityConfig {
                 .requestMatchers("/inventario/**").hasAnyRole("ALMACEN", "ADMIN", "VENTAS")
                 .requestMatchers("/ventas/**").hasAnyRole("VENTAS", "ADMIN")
                 .requestMatchers("/despachos/**").hasAnyRole("ALMACEN", "ADMIN", "VENTAS")
+                .requestMatchers("/empleados/**").hasAnyRole("RRHH", "ADMIN")
+                .requestMatchers("/asistencia/**").hasAnyRole("RRHH", "ADMIN")
+                .requestMatchers("/incidencias-personal/**").hasAnyRole("RRHH", "ADMIN")
                 .anyRequest().authenticated()
             )
             .httpBasic(basic -> {});
