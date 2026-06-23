@@ -2,6 +2,7 @@ package dsw.sigconbackend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 
 /**
  * Soporte de HU21/HU22/HU23 — Gestión de Recursos Humanos
@@ -33,4 +34,7 @@ public class Empleado {
 
     @Column(nullable = false)
     private Boolean activo = true;
+
+    @Column(name = "salario_base", precision = 10, scale = 2)
+    private BigDecimal salarioBase = BigDecimal.ZERO;
 }

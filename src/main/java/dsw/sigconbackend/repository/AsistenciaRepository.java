@@ -27,15 +27,18 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     // HU22 — Registrar tardanzas y faltas
     // ─────────────────────────────────────────
 
+    // Todas las incidencias (Tardanza o Ausente) dentro de un rango de fechas
     @Query("SELECT a FROM Asistencia a WHERE a.fecha BETWEEN :desde AND :hasta " +
            "AND a.estado <> 'Presente' ORDER BY a.fecha DESC, a.empleado.nombre")
     List<Asistencia> findIncidenciasEntreFechas(LocalDate desde, LocalDate hasta);
 
+    // Incidencias de un empleado específico dentro de un rango de fechas
     @Query("SELECT a FROM Asistencia a WHERE a.empleado.id = :empleadoId " +
            "AND a.fecha BETWEEN :desde AND :hasta AND a.estado <> 'Presente' " +
            "ORDER BY a.fecha DESC")
     List<Asistencia> findIncidenciasPorEmpleadoEntreFechas(Long empleadoId, LocalDate desde, LocalDate hasta);
 
+    // Todos los registros (incidencias o no) dentro de un rango, para calcular totales
     @Query("SELECT a FROM Asistencia a WHERE a.fecha BETWEEN :desde AND :hasta")
     List<Asistencia> findEntreFechas(LocalDate desde, LocalDate hasta);
 }

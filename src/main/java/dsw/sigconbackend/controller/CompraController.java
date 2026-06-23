@@ -9,6 +9,7 @@ import java.util.List;
 @RequestMapping("/compra")
 public class CompraController {
     @Autowired private CompraService service;
+
     @GetMapping public List<Compra> listar() { return service.listar(); }
-    @PostMapping public Compra registrar(@RequestBody Compra c) { return service.registrar(c); }
+    @PostMapping public CompraService.RegistrarCompraResultado registrar(@RequestBody Compra c) { return service.registrar(c); }
 }

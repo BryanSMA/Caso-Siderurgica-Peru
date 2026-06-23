@@ -1,6 +1,5 @@
 package dsw.sigconbackend.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -21,8 +21,11 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
+    private final JwtFilter jwtFilter;
+
+    public SecurityConfig(JwtFilter jwtFilter) {
+        this.jwtFilter = jwtFilter;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -32,19 +35,40 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login").permitAll()
-                .requestMatchers("/usuarios/**").hasAnyRole("ADMIN")
+
+                // ── Públicos ──────────────────────────────────────────────
+                .requestMatchers("/login", "/auth/refresh").permitAll()
+
+                // ── Solo ADMIN ────────────────────────────────────────────
+                .requestMatchers("/usuarios/**").hasRole("ADMIN")
+
+                // ── Comercial: VENTAS + ADMIN ─────────────────────────────
                 .requestMatchers("/cotizaciones/**").hasAnyRole("VENTAS", "ADMIN")
                 .requestMatchers("/pedidos/**").hasAnyRole("VENTAS", "ADMIN")
-                .requestMatchers("/inventario/**").hasAnyRole("ALMACEN", "ADMIN", "VENTAS")
                 .requestMatchers("/ventas/**").hasAnyRole("VENTAS", "ADMIN")
+
+                // ── Almacén: ALMACEN + ADMIN ──────────────────────────────
+                // DEF-02: agregados /orden-compra/**, /compra/**, /presupuesto/**
+                .requestMatchers("/orden-compra/**").hasAnyRole("ALMACEN", "ADMIN")
+                .requestMatchers("/compra/**").hasAnyRole("ALMACEN", "ADMIN")
+                .requestMatchers("/presupuesto/**").hasAnyRole("ALMACEN", "ADMIN")
+                // DEF-03: agregado /proveedor/**
+                .requestMatchers("/proveedor/**").hasAnyRole("ALMACEN", "ADMIN")
+
+                // ── Almacén + VENTAS (despacho e inventario son compartidos) ──
+                .requestMatchers("/inventario/**").hasAnyRole("ALMACEN", "ADMIN", "VENTAS")
                 .requestMatchers("/despachos/**").hasAnyRole("ALMACEN", "ADMIN", "VENTAS")
+
+                // ── RRHH: RRHH + ADMIN ────────────────────────────────────
                 .requestMatchers("/empleados/**").hasAnyRole("RRHH", "ADMIN")
                 .requestMatchers("/asistencia/**").hasAnyRole("RRHH", "ADMIN")
+                .requestMatchers("/planillas/**").hasAnyRole("RRHH", "ADMIN")
                 .requestMatchers("/incidencias-personal/**").hasAnyRole("RRHH", "ADMIN")
+
+                // ── Cualquier otro endpoint requiere autenticación ─────────
                 .anyRequest().authenticated()
             )
-            .httpBasic(basic -> {});
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
