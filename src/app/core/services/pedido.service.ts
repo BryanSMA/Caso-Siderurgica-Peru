@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Pedido {
   id?:             number;
@@ -21,7 +22,7 @@ export interface Pedido {
 
 @Injectable({ providedIn: 'root' })
 export class PedidoService {
-  private url = 'http://localhost:3000/pedidos';
+  private url = `${environment.apiUrl}/pedidos`;
 
   constructor(private http: HttpClient) {}
 

@@ -1,8 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { DataService } from '../../core/services/data.service';
 
 // ── Componentes hijos ──
 import { VentasComponent }         from './ventas/ventas';
@@ -32,8 +33,13 @@ import { MantenimientoComponent }  from './mantenimiento/mantenimiento';
 })
 export class DashboardComponent implements OnInit {
 
+  private router      = inject(Router);
+  private authService = inject(AuthService);
+  private cdr         = inject(ChangeDetectorRef);
+  ds                  = inject(DataService);   // expuesto al template
+
   activeView = 'dashboard';
-  usuarioActual: any = null;
+  usuarioActual: any       = null;
   rolActual: string | null = null;
 
   // Toast global
@@ -41,13 +47,24 @@ export class DashboardComponent implements OnInit {
 
   // Notificaciones
   showNotif = false;
-  notificaciones = [
-  { icono: '📦', titulo: 'Stock crítico', msg: 'Alambre galvanizado #16 sin stock', tiempo: 'Hace 5 min', leida: false, link: 'inventario' },
-  { icono: '🚚', titulo: 'Despacho pendiente', msg: 'Guía #GUI-1840 sin confirmar entrega', tiempo: 'Hace 20 min', leida: false, link: 'despacho' },
-  { icono: '💰', titulo: 'Nueva venta', msg: 'Pedido #PED-2847 aprobado por S/ 48,200', tiempo: 'Hace 1 hora', leida: true, link: 'ventas' },
-  { icono: '⚠️', titulo: 'Orden pendiente', msg: 'OC-0420 requiere aprobación', tiempo: 'Hace 2 horas', leida: true, link: 'abastecimiento' },
-  { icono: '👤', titulo: 'Empleado ausente', msg: 'Ana Paredes registró licencia médica', tiempo: 'Hace 3 horas', leida: true, link: 'rrhh' },
-];
+
+  get notificaciones() {
+    const base = [
+      { icono: '⚠️', titulo: 'Orden pendiente',    msg: 'Hay órdenes de compra pendientes de aprobación', tiempo: 'Ahora',        leida: false, link: 'abastecimiento' },
+      { icono: '🚚', titulo: 'Despachos pendientes',msg: `${this.ds.despachosRegistrados()} despachos activos en el sistema`, tiempo: 'Ahora', leida: false, link: 'despacho' },
+    ];
+    // Alertas dinámicas por SKUs críticos — datos reales del inventario
+    const criticos = this.ds.skusCriticos();
+    criticos.forEach(sku => base.unshift({
+      icono:  '📦',
+      titulo: 'Stock crítico',
+      msg:    `${sku.producto} — stock: ${sku.stock} ${sku.unidad}`,
+      tiempo: 'Ahora',
+      leida:  false,
+      link:   'inventario',
+    }));
+    return base;
+  }
 
   permisosPorRol: Record<string, string[]> = {
     ADMIN:    ['dashboard','ventas','cotizaciones','pedidos','despacho','inventario','abastecimiento','proveedores','rrhh','planillas','reportes','mantenimiento'],
@@ -57,25 +74,20 @@ export class DashboardComponent implements OnInit {
     CONSULTA: ['dashboard','reportes'],
   };
 
-  constructor(
-    private router: Router,
-    private authService: AuthService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
   ngOnInit() {
     this.usuarioActual = this.authService.getUser();
-    this.rolActual = this.authService.getRol();
+    this.rolActual     = this.authService.getRol();
+    // ← carga datos reales del backend al entrar al dashboard
+    this.ds.cargarDatos();
   }
-  irANotif(n: any) {
-  n.leida = true;
-  this.showNotif = false;
-  if (n.link && this.puedeVer(n.link)) {
-    this.activeView = n.link;
-  }
-}
 
-  // ── Permisos ──
+  irANotif(n: any) {
+    n.leida = true;
+    this.showNotif = false;
+    if (n.link && this.puedeVer(n.link)) this.activeView = n.link;
+  }
+
+  // ── Permisos ──────────────────────────────────────────────────────────────
   puedeVer(view: string): boolean {
     return this.permisosPorRol[this.rolActual || '']?.includes(view) ?? false;
   }
@@ -83,15 +95,16 @@ export class DashboardComponent implements OnInit {
     return views.some(v => this.puedeVer(v));
   }
 
-  // ── Navegación ──
+  // ── Navegación ────────────────────────────────────────────────────────────
   showView(view: string) {
     if (this.puedeVer(view)) this.activeView = view;
   }
 
   getCurrentTitle(): string {
     const titles: Record<string, string> = {
-      dashboard: 'Dashboard', ventas: 'Gestión de Ventas', cotizaciones: 'Gestión de Cotizaciones',
-      pedidos: 'Gestión de Pedidos', despacho: 'Gestión de Despacho', inventario: 'Gestión de Inventario',
+      dashboard: 'Dashboard', ventas: 'Gestión de Ventas',
+      cotizaciones: 'Gestión de Cotizaciones', pedidos: 'Gestión de Pedidos',
+      despacho: 'Gestión de Despacho', inventario: 'Gestión de Inventario',
       abastecimiento: 'Gestión de Abastecimiento', proveedores: 'Gestión de Proveedores',
       rrhh: 'Gestión de Recursos Humanos', planillas: 'Gestión de Planillas',
       reportes: 'Gestión de Reportes', mantenimiento: 'Mantenimiento del Sistema',
@@ -101,25 +114,29 @@ export class DashboardComponent implements OnInit {
 
   getCurrentSub(): string {
     const subs: Record<string, string> = {
-      dashboard: 'Resumen ejecutivo del sistema', ventas: 'Control de pedidos y transacciones comerciales',
-      cotizaciones: 'Registro, cálculo automático y consulta de cotizaciones',
-      pedidos: 'Registro, validación y comprobantes de pedidos de venta',
-      despacho: 'Seguimiento de envíos y entregas', inventario: 'Control de stock y almacén',
-      abastecimiento: 'Órdenes de compra y proveedores', proveedores: 'Directorio de proveedores estratégicos',
-      rrhh: 'Control de asistencia y personal', planillas: 'Gestión salarial — Julio 2025',
-      reportes: 'Indicadores clave del negocio', mantenimiento: 'Administración de usuarios, roles y configuración',
+      dashboard:      'Resumen ejecutivo del sistema',
+      ventas:         'Control de pedidos y transacciones comerciales',
+      cotizaciones:   'Registro, cálculo automático y consulta de cotizaciones',
+      pedidos:        'Registro, validación y comprobantes de pedidos de venta',
+      despacho:       'Seguimiento de envíos y entregas',
+      inventario:     'Control de stock y almacén',
+      abastecimiento: 'Órdenes de compra y proveedores',
+      proveedores:    'Directorio de proveedores estratégicos',
+      rrhh:           'Control de asistencia y personal',
+      planillas:      'Gestión salarial',
+      reportes:       'Indicadores clave del negocio',
+      mantenimiento:  'Administración de usuarios, roles y configuración',
     };
     return subs[this.activeView] || '';
   }
 
   logout() { this.authService.logout(); }
 
-  // ── Notificaciones ──
+  // ── Notificaciones ────────────────────────────────────────────────────────
   get notifNoLeidas(): number { return this.notificaciones.filter(n => !n.leida).length; }
-  toggleNotif() { this.showNotif = !this.showNotif; }
-  marcarLeida(n: any) { n.leida = true; }
+  toggleNotif()       { this.showNotif = !this.showNotif; }
   marcarTodasLeidas() { this.notificaciones.forEach(n => n.leida = true); }
-  cerrarNotif() { this.showNotif = false; }
+  cerrarNotif()       { this.showNotif = false; }
 
   showToast(msg: string, type: 'success' | 'error' | 'info' = 'success') {
     this.toastMsg = msg; this.toastType = type; this.toastVisible = true;

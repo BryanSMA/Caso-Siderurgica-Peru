@@ -31,7 +31,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
-      <input type="text" placeholder="Buscar por código, cliente o producto..." [(ngModel)]="pedidoSearch">
+      <input type="text" placeholder="Buscar por código, cliente, RUC o producto..." [(ngModel)]="pedidoSearch">
     </div>
     <select class="filter-select" [(ngModel)]="pedidoFiltroEstado">
       <option value="">Todos los estados</option>
@@ -104,7 +104,7 @@
   </table>
 </div>
 
-<!-- MODAL -->
+<!-- ══════════════════ MODAL ══════════════════ -->
 <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
   <div class="modal-box" (click)="$event.stopPropagation()">
     <div class="modal-header">
@@ -112,99 +112,130 @@
       <button class="modal-close" (click)="closeModal()">✕</button>
     </div>
 
-    <!-- CREAR -->
+    <!-- ── CREAR ── -->
     <div *ngIf="modalMode === 'crear'" class="modal-body">
-      <div class="form-grid">
+      <form [formGroup]="form" autocomplete="off">
+        <div class="form-grid">
 
-        <div class="form-field">
-          <label>Cliente *</label>
-          <input type="text" [(ngModel)]="pedidoForm.cliente" placeholder="Nombre del cliente">
-        </div>
+          <!-- Cliente -->
+          <div class="form-field">
+            <label>Cliente <span class="required-star">*</span></label>
+            <input
+              type="text"
+              formControlName="cliente"
+              placeholder="Nombre del cliente"
+              [class.input-error]="isInvalid('cliente')">
+            <div class="field-error" *ngIf="isInvalid('cliente')">
+              <span class="error-icon">⚠</span> {{ errorMsg('cliente', 'Cliente') }}
+            </div>
+          </div>
 
-        <div class="form-field">
-          <label>RUC (11 dígitos)</label>
-          <input type="text" [(ngModel)]="pedidoForm.ruc" placeholder="20XXXXXXXXX" maxlength="11">
-        </div>
+          <!-- RUC -->
+          <div class="form-field">
+            <label>RUC</label>
+            <input
+              type="text"
+              formControlName="ruc"
+              placeholder="20XXXXXXXXX"
+              maxlength="11"
+              (input)="form.get('ruc')?.setValue($any($event.target).value.replace(/[^0-9]/g,''))"
+              [class.input-error]="isInvalid('ruc')">
+            <div class="field-error" *ngIf="isInvalid('ruc')">
+              <span class="error-icon">⚠</span> {{ errorMsg('ruc', 'RUC') }}
+            </div>
+            <div class="field-hint" *ngIf="!isInvalid('ruc')">11 dígitos numéricos</div>
+          </div>
 
-        <!-- Producto con dropdown de inventario -->
-        <div class="form-field full" style="position:relative">
-          <label>Producto *</label>
-          <input
-            type="text"
-            [(ngModel)]="productoSearch"
-            (input)="onProductoInput($event)"
-            (click)="onAbrirDropdown($event)"
-            placeholder="Buscar producto del inventario..."
-            autocomplete="off">
+          <!-- Producto con dropdown -->
+          <div class="form-field full" style="position:relative">
+            <label>Producto <span class="required-star">*</span></label>
+            <input
+              type="text"
+              [value]="productoSearch"
+              (input)="onProductoInput($event)"
+              (click)="onAbrirDropdown($event)"
+              placeholder="Buscar producto del inventario..."
+              autocomplete="off"
+              [class.input-error]="isInvalid('producto')">
 
-          <div *ngIf="showDropdownProducto" class="producto-dropdown" (click)="$event.stopPropagation()">
-            <div *ngFor="let p of productosFiltrados"
-                 class="producto-item"
-                 (click)="seleccionarProducto(p, $event)">
-              <div class="producto-nombre">{{ p.producto }}</div>
-              <div class="producto-meta">
-                <span class="producto-stock"
-                      [style.color]="p.stock <= (p.stockMinimo||0) ? '#DD6B20' : '#38A169'">
-                  Stock: {{ p.stock }} {{ p.unidad }}
-                </span>
-                <span class="producto-precio">
-                  {{ formatMoney(p.precioUnitario || p.precio_unitario || 0) }}
-                </span>
+            <!-- Dropdown inventario -->
+            <div *ngIf="showDropdownProducto" class="producto-dropdown" (click)="$event.stopPropagation()">
+              <div *ngFor="let p of productosFiltrados"
+                   class="producto-item"
+                   (click)="seleccionarProducto(p, $event)">
+                <div class="producto-nombre">{{ p.producto }}</div>
+                <div class="producto-meta">
+                  <span class="producto-stock"
+                        [style.color]="p.stock <= (p.stockMinimo||0) ? '#DD6B20' : '#38A169'">
+                    Stock: {{ p.stock }} {{ p.unidad }}
+                  </span>
+                  <span class="producto-precio">
+                    {{ formatMoney(p.precioUnitario || p.precio_unitario || 0) }}
+                  </span>
+                </div>
+                <div class="td-sub" *ngIf="p.categoria">{{ p.categoria }}</div>
               </div>
-              <div class="td-sub" *ngIf="p.categoria">{{ p.categoria }}</div>
+              <div *ngIf="productosFiltrados.length === 0"
+                   class="producto-item" style="color:#A0AEC0">
+                No se encontraron productos con stock disponible
+              </div>
             </div>
-            <div *ngIf="productosFiltrados.length === 0"
-                 class="producto-item" style="color:#A0AEC0">
-              No se encontraron productos con stock disponible
+
+            <div class="field-error" *ngIf="isInvalid('producto')">
+              <span class="error-icon">⚠</span> {{ errorMsg('producto', 'Producto') }}
             </div>
           </div>
-        </div>
 
-        <div class="form-field">
-          <label>Cantidad *</label>
-          <input type="number" [(ngModel)]="pedidoForm.cantidad"
-                 (ngModelChange)="onCantidadChange()"
-                 placeholder="0" min="1"
-                 [max]="productoSeleccionado?.stock || 99999">
-          <div *ngIf="errorCantidad"
-               style="color:#E53E3E;font-size:12px;margin-top:4px">
-            ⚠ {{ errorCantidad }}
+          <!-- Cantidad -->
+          <div class="form-field">
+            <label>Cantidad <span class="required-star">*</span></label>
+            <input
+              type="number"
+              formControlName="cantidad"
+              placeholder="0"
+              min="1"
+              [max]="productoSeleccionado?.stock || 99999"
+              [class.input-error]="isInvalid('cantidad')">
+            <div class="field-error" *ngIf="isInvalid('cantidad')">
+              <span class="error-icon">⚠</span> {{ errorMsg('cantidad', 'Cantidad') }}
+            </div>
+            <div class="field-hint" *ngIf="productoSeleccionado && !isInvalid('cantidad')">
+              Máximo: {{ productoSeleccionado.stock }} {{ productoSeleccionado.unidad }}
+            </div>
           </div>
-          <div *ngIf="productoSeleccionado && !errorCantidad"
-               style="color:#718096;font-size:12px;margin-top:4px">
-            Máximo: {{ productoSeleccionado.stock }} {{ productoSeleccionado.unidad }}
-          </div>
-        </div>
 
-        <div class="form-field">
-          <label>Precio Unitario (S/) *</label>
-          <input type="number" [(ngModel)]="pedidoForm.precio_unitario"
-                 placeholder="0.00"
-                 [readonly]="!!productoSeleccionado"
-                 [style.background]="productoSeleccionado ? '#F7FAFC' : 'white'">
-          <div *ngIf="productoSeleccionado"
-               style="color:#718096;font-size:12px;margin-top:4px">
-            Precio fijo del inventario
+          <!-- Precio unitario -->
+          <div class="form-field">
+            <label>Precio Unitario (S/) <span class="required-star">*</span></label>
+            <input
+              type="number"
+              formControlName="precio_unitario"
+              placeholder="0.00"
+              [readonly]="!!productoSeleccionado"
+              [style.background]="productoSeleccionado ? '#F7FAFC' : 'white'"
+              [class.input-error]="isInvalid('precio_unitario')">
+            <div class="field-error" *ngIf="isInvalid('precio_unitario')">
+              <span class="error-icon">⚠</span> {{ errorMsg('precio_unitario', 'Precio unitario') }}
+            </div>
+            <div class="field-hint" *ngIf="productoSeleccionado">Precio fijo del inventario</div>
           </div>
-        </div>
 
-        <div class="form-field full">
-          <div class="td-sub">
-            Subtotal + IGV 18% = Total. Se calcula automáticamente en el backend.
+          <div class="form-field full">
+            <div class="td-sub">Subtotal + IGV 18% = Total. Se calcula automáticamente en el backend.</div>
           </div>
-        </div>
 
-      </div>
+        </div>
+      </form>
+
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button class="btn btn-primary" (click)="guardarPedido()"
-                [disabled]="guardando || !!errorCantidad">
+        <button class="btn btn-primary" (click)="guardarPedido()" [disabled]="guardando">
           {{ guardando ? 'Registrando...' : 'Registrar Pedido' }}
         </button>
       </div>
     </div>
 
-    <!-- VER -->
+    <!-- ── VER ── -->
     <div *ngIf="modalMode === 'ver'" class="modal-body">
       <div class="detail-grid">
         <div class="detail-item"><div class="detail-label">Código</div><div class="detail-val">{{ pedidoForm.codigo }}</div></div>
@@ -215,7 +246,8 @@
         <div class="detail-item"><div class="detail-label">Subtotal</div><div class="detail-val">{{ formatMoney(+pedidoForm.subtotal!) }}</div></div>
         <div class="detail-item"><div class="detail-label">IGV (18%)</div><div class="detail-val">{{ formatMoney(+pedidoForm.igv!) }}</div></div>
         <div class="detail-item"><div class="detail-label">Total</div><div class="detail-val"><strong>{{ formatMoney(+pedidoForm.total!) }}</strong></div></div>
-        <div class="detail-item"><div class="detail-label">Estado</div>
+        <div class="detail-item">
+          <div class="detail-label">Estado</div>
           <div class="detail-val">
             <span class="badge" [class]="getBadgeClass(pedidoForm.estado || '')">{{ pedidoForm.estado }}</span>
           </div>
@@ -231,13 +263,53 @@
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" [class.visible]="toastVisible" [class.toast-error]="toastType==='error'">
+<!-- Toast -->
+<div class="toast"
+     [class.visible]="toastVisible"
+     [class.toast-error]="toastType==='error'"
+     [class.toast-info]="toastType==='info'">
   {{ toastMsg }}
 </div>
 
-<!-- Estilos dropdown -->
 <style>
+/* ── Validación visual ─────────────────────────────────────── */
+.required-star { color: #E53E3E; margin-left: 2px; }
+
+.input-error {
+  border-color: #E53E3E !important;
+  background-color: #FFF5F5 !important;
+  box-shadow: 0 0 0 3px rgba(229,62,62,0.12) !important;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #C53030;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 5px;
+  padding: 4px 8px;
+  background: #FFF5F5;
+  border-left: 3px solid #E53E3E;
+  border-radius: 0 4px 4px 0;
+  animation: fadeInError 0.2s ease;
+}
+
+.error-icon { font-size: 11px; }
+
+.field-hint {
+  color: #718096;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+@keyframes fadeInError {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Dropdown producto ─────────────────────────────────────── */
 .producto-dropdown {
   position: absolute;
   top: calc(100% + 4px);

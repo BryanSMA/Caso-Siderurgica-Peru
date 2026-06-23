@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-// ─────────────────────────────────────────
-// Interface — igual estructura que el backend
-// ─────────────────────────────────────────
+import { environment } from '../../../environments/environment';
 export interface Inventario {
   id?:                number;
   producto:           string;
@@ -17,7 +14,6 @@ export interface Inventario {
   unidad?:            string;
   fecha_actualizacion?: string;
   fechaActualizacion?:  string;
-  // HU11 — calculado por el backend
   bajoStock?:         boolean;
 }
 
@@ -29,62 +25,42 @@ export interface BajoStockResponse {
 @Injectable({ providedIn: 'root' })
 export class InventarioService {
 
-  private url = 'http://localhost:3000/inventario';
+  private url = `${environment.apiUrl}/inventario`;
 
   constructor(private http: HttpClient) {}
 
-  // Reutiliza el mismo patrón de auth que tus otros services
-  private getHeaders(): HttpHeaders {
-    const user = JSON.parse(localStorage.getItem('erp_user') || '{}');
-    const credentials = btoa(`${user.username}:123456`);
-    return new HttpHeaders({ Authorization: `Basic ${credentials}` });
-  }
 
-  // ─────────────────────────────────────────
-  // HU09 — Visualizar stock disponible
-  // ─────────────────────────────────────────
 
   listarInventario(): Observable<Inventario[]> {
-    return this.http.get<Inventario[]>(this.url, { headers: this.getHeaders() });
+    return this.http.get<Inventario[]>(this.url);
   }
 
   buscarPorId(id: number): Observable<Inventario> {
-    return this.http.get<Inventario>(`${this.url}/${id}`, { headers: this.getHeaders() });
+    return this.http.get<Inventario>(`${this.url}/${id}`);
   }
 
-  // ─────────────────────────────────────────
-  // HU10 — Actualizar inventario
-  // ─────────────────────────────────────────
-
   crearProducto(inv: Inventario): Observable<any> {
-    return this.http.post<any>(this.url, inv, { headers: this.getHeaders() });
+    return this.http.post<any>(this.url, inv);
   }
 
   actualizarProducto(id: number, inv: Inventario): Observable<any> {
-    return this.http.put<any>(`${this.url}/${id}`, inv, { headers: this.getHeaders() });
+    return this.http.put<any>(`${this.url}/${id}`, inv);
   }
 
-  // ENTRADA o SALIDA de stock
   actualizarStock(id: number, cantidad: number, tipo: 'ENTRADA' | 'SALIDA'): Observable<any> {
     return this.http.patch<any>(
       `${this.url}/${id}/stock`,
-      { cantidad, tipo },
-      { headers: this.getHeaders() }
+      { cantidad, tipo }
     );
   }
 
-  // ─────────────────────────────────────────
-  // HU11 — Alertar bajo stock
-  // ─────────────────────────────────────────
-
   listarBajoStock(): Observable<BajoStockResponse> {
     return this.http.get<BajoStockResponse>(
-      `${this.url}/bajo-stock`,
-      { headers: this.getHeaders() }
+      `${this.url}/bajo-stock`
     );
   }
 
   obtenerValorTotal(): Observable<any> {
-  return this.http.get(`${this.url}/valor-total`, { headers: this.getHeaders() });
-}
+    return this.http.get(`${this.url}/valor-total`);
+  }
 }

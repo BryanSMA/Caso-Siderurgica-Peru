@@ -1,24 +1,26 @@
 // src/app/features/dashboard/pedidos/pedidos.ts
 import { Component, OnInit, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PedidoService, Pedido } from '../../../core/services/pedido.service';
 import { InventarioService, Inventario } from '../../../core/services/inventario.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { CustomValidators } from '../../../core/validators/custom-validators';
 import jsPDF from 'jspdf';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './pedidos.html',
   styles: [],
   encapsulation: ViewEncapsulation.None
 })
 export class PedidosComponent implements OnInit {
 
-  private readonly API = 'http://localhost:3000';
+  private readonly API = environment.apiUrl;
 
   pedidos: Pedido[] = [];
   pedidoSearch = '';
@@ -27,7 +29,7 @@ export class PedidosComponent implements OnInit {
   loadingAction = false;
   showModal = false;
   modalMode: 'crear' | 'ver' = 'crear';
-  pedidoForm: Partial<Pedido> = { cantidad: 1, precio_unitario: 0 };
+  pedidoForm: Partial<Pedido> = {};
   guardando = false;
   toastMsg = '';
   toastType: 'success' | 'error' | 'info' = 'success';
@@ -35,25 +37,27 @@ export class PedidosComponent implements OnInit {
   usuarioActual: any = null;
   rolActual: string | null = null;
 
-  // ── Inventario / dropdown ────────────────────────────────────────────────
+  form!: FormGroup;
+
   productosInventario: Inventario[] = [];
   productosFiltrados: Inventario[] = [];
   productoSearch = '';
   showDropdownProducto = false;
   productoSeleccionado: Inventario | null = null;
-  errorCantidad = '';
 
   constructor(
     private pedidoService: PedidoService,
     private inventarioService: InventarioService,
     private authService: AuthService,
     private http: HttpClient,
+    private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.usuarioActual = this.authService.getUser();
     this.rolActual = this.authService.getRol();
+    this.initForm();
     this.cargarPedidos();
     this.cargarInventario();
     document.addEventListener('click', () => {
@@ -62,17 +66,32 @@ export class PedidosComponent implements OnInit {
     });
   }
 
-  private getHeaders(): HttpHeaders {
-    const userStr = localStorage.getItem('erp_user');
-    let token = '';
-    if (userStr) {
-      try { const u = JSON.parse(userStr); token = btoa(`${u.username}:123456`); }
-      catch { token = userStr; }
-    }
-    return new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': `Basic ${token}` });
+  initForm() {
+    this.form = this.fb.group({
+      cliente:         ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      ruc:             ['', [Validators.pattern(CustomValidators.REGEX.ruc), CustomValidators.noSameDigits()]],
+      producto:        ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      cantidad:        [1,  [Validators.required, Validators.min(1)]],
+      precio_unitario: [0,  [Validators.required, Validators.min(0.01)]],
+    });
   }
 
-  // ── Inventario ───────────────────────────────────────────────────────────
+  isInvalid(campo: string): boolean {
+    return CustomValidators.showError(this.form.get(campo));
+  }
+
+  errorMsg(campo: string, label: string): string {
+    const control = this.form.get(campo);
+    if (!control || !control.errors || !(control.touched || control.dirty)) return '';
+    if (campo === 'cantidad' && control.errors['max']) {
+      return `Stock disponible: ${this.productoSeleccionado?.stock ?? 0} ${this.productoSeleccionado?.unidad ?? 'unidades'}`;
+    }
+    if (campo === 'cantidad' && control.errors['min']) {
+      return 'La cantidad debe ser mayor a 0.';
+    }
+    return CustomValidators.getErrorMessage(control, label);
+  }
+
   cargarInventario() {
     this.inventarioService.listarInventario().subscribe({
       next: (data) => {
@@ -86,10 +105,10 @@ export class PedidosComponent implements OnInit {
   onProductoInput(event: Event) {
     const val = (event.target as HTMLInputElement).value;
     this.productoSearch = val;
-    this.pedidoForm.producto = val;
+    this.form.get('producto')?.setValue(val, { emitEvent: false });
     this.productoSeleccionado = null;
-    this.pedidoForm.precio_unitario = 0;
-    this.errorCantidad = '';
+    this.form.get('precio_unitario')?.setValue(0);
+    this._actualizarMaxCantidad(null);
     this.productosFiltrados = this.productosInventario.filter(p =>
       p.producto.toLowerCase().includes(val.toLowerCase()) ||
       (p.categoria || '').toLowerCase().includes(val.toLowerCase())
@@ -101,11 +120,11 @@ export class PedidosComponent implements OnInit {
   seleccionarProducto(p: Inventario, event: Event) {
     event.stopPropagation();
     this.productoSeleccionado = p;
-    this.pedidoForm.producto = p.producto;
     this.productoSearch = p.producto;
-    this.pedidoForm.precio_unitario = p.precioUnitario || p.precio_unitario || 0;
+    this.form.get('producto')?.setValue(p.producto);
+    this.form.get('precio_unitario')?.setValue(p.precioUnitario || p.precio_unitario || 0);
+    this._actualizarMaxCantidad(p.stock);
     this.showDropdownProducto = false;
-    this.errorCantidad = '';
     this.cdr.detectChanges();
   }
 
@@ -118,17 +137,17 @@ export class PedidosComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  onCantidadChange() {
-    this.errorCantidad = '';
-    if (!this.productoSeleccionado) return;
-    const cant = Number(this.pedidoForm.cantidad);
-    if (cant <= 0) { this.errorCantidad = 'La cantidad debe ser mayor a 0.'; return; }
-    if (cant > this.productoSeleccionado.stock) {
-      this.errorCantidad = `Stock disponible: ${this.productoSeleccionado.stock} ${this.productoSeleccionado.unidad || 'unidades'}`;
+  private _actualizarMaxCantidad(maxStock: number | null) {
+    const cantidadCtrl = this.form.get('cantidad');
+    if (!cantidadCtrl) return;
+    if (maxStock !== null) {
+      cantidadCtrl.setValidators([Validators.required, Validators.min(1), Validators.max(maxStock)]);
+    } else {
+      cantidadCtrl.setValidators([Validators.required, Validators.min(1)]);
     }
+    cantidadCtrl.updateValueAndValidity();
   }
 
-  // ── CRUD Pedidos ─────────────────────────────────────────────────────────
   cargarPedidos() {
     this.loadingPedidos = true;
     this.pedidoService.listarPedidos().subscribe({
@@ -141,10 +160,10 @@ export class PedidosComponent implements OnInit {
 
   openModalCrear() {
     this.modalMode = 'crear';
-    this.pedidoForm = { cantidad: 1, precio_unitario: 0 };
+    this.form.reset({ cantidad: 1, precio_unitario: 0 });
+    this.pedidoForm = {};
     this.productoSearch = '';
     this.productoSeleccionado = null;
-    this.errorCantidad = '';
     this.showDropdownProducto = false;
     this.showModal = true;
   }
@@ -155,21 +174,26 @@ export class PedidosComponent implements OnInit {
     this.showModal = true;
   }
 
-  closeModal() { this.showModal = false; this.showDropdownProducto = false; }
+  closeModal() {
+    this.showModal = false;
+    this.showDropdownProducto = false;
+  }
 
   guardarPedido() {
-    if (!this.pedidoForm.cliente || !this.pedidoForm.producto) {
-      this.showToast('Complete cliente y producto', 'error'); return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.showToast('Corrija los errores del formulario antes de continuar.', 'error');
+      return;
     }
-    if (this.errorCantidad) { this.showToast(this.errorCantidad, 'error'); return; }
     this.guardando = true;
+    const val = this.form.value;
     const nuevo = {
-      cliente: this.pedidoForm.cliente!,
-      ruc: this.pedidoForm.ruc || '',
-      producto: this.pedidoForm.producto!,
-      cantidad: Number(this.pedidoForm.cantidad),
-      precio_unitario: Number(this.pedidoForm.precio_unitario),
-      usuario_id: this.usuarioActual?.id || null
+      cliente:         val.cliente,
+      ruc:             val.ruc || '',
+      producto:        val.producto,
+      cantidad:        Number(val.cantidad),
+      precio_unitario: Number(val.precio_unitario),
+      usuario_id:      this.usuarioActual?.id || null
     };
     this.pedidoService.registrarPedido(nuevo).subscribe({
       next: () => {
@@ -183,17 +207,31 @@ export class PedidosComponent implements OnInit {
     });
   }
 
+  // CN-P03 + DEF-09 — stock insuficiente y alerta bajo stock con mensajes claros
   cambiarEstado(p: Pedido, estado: string) {
     this.loadingAction = true;
-    this.http.patch<any>(`${this.API}/pedidos/${p.id}/estado`, { estado }, { headers: this.getHeaders() }).subscribe({
+    this.http.patch<any>(`${this.API}/pedidos/${p.id}/estado`, { estado }).subscribe({
       next: (res) => {
         const pedidoActualizado: Pedido = res.pedido || res;
         if (res.warning) {
-          this.showToast(`Pedido ${pedidoActualizado.codigo} ${estado}. ⚠ ${res.warning}`, 'info');
+          // Producto no encontrado en inventario
+          this.showToast(
+            `Pedido ${pedidoActualizado.codigo} ${estado}. ⚠️ ${res.warning}`,
+            'info'
+          );
         } else if (estado === 'APROBADO') {
-          let msg = `Pedido ${pedidoActualizado.codigo} aprobado. Stock actualizado.`;
-          if (res.bajoPstock) msg += ' ⚠ Stock por debajo del mínimo.';
-          this.showToast(msg, 'success');
+          // DEF-09 — alerta de bajo stock visible claramente
+          if (res.bajoPstock) {
+            this.showToast(
+              `✅ Pedido ${pedidoActualizado.codigo} aprobado. ⚠️ Stock de "${p.producto}" quedó por debajo del mínimo.`,
+              'info'
+            );
+          } else {
+            this.showToast(
+              `✅ Pedido ${pedidoActualizado.codigo} aprobado. Stock actualizado correctamente.`,
+              'success'
+            );
+          }
         } else {
           this.showToast(`Pedido ${pedidoActualizado.codigo} → ${estado}`);
         }
@@ -202,7 +240,9 @@ export class PedidosComponent implements OnInit {
         this.loadingAction = false;
       },
       error: (err) => {
-        this.showToast(err.error?.error || 'Error al cambiar estado', 'error');
+        // CN-P03 — ahora el backend retorna 400 con mensaje legible
+        const msg = err.error?.error || 'Error al cambiar el estado del pedido.';
+        this.showToast(`❌ ${msg}`, 'error');
         this.cargarPedidos();
         this.loadingAction = false;
         this.cdr.detectChanges();
@@ -213,7 +253,7 @@ export class PedidosComponent implements OnInit {
   generarVenta(p: Pedido) {
     if (!confirm(`¿Generar venta para el pedido ${p.codigo}?\nCliente: ${p.cliente}\nProducto: ${p.producto} × ${p.cantidad}`)) return;
     this.loadingAction = true;
-    this.http.post<any>(`${this.API}/ventas/desde-pedido/${p.id}`, {}, { headers: this.getHeaders() }).subscribe({
+    this.http.post<any>(`${this.API}/ventas/desde-pedido/${p.id}`, {}).subscribe({
       next: (venta) => {
         this.showToast(`✅ Venta ${venta.codigo} generada. Total: S/ ${Number(venta.total).toFixed(2)}`, 'success');
         this.cargarPedidos();
@@ -247,7 +287,7 @@ export class PedidosComponent implements OnInit {
   getBadgeClass(estado: string): string {
     const map: Record<string, string> = {
       'PENDIENTE': 'badge-orange', 'APROBADO': 'badge-green',
-      'RECHAZADO': 'badge-red', 'FACTURADO': 'badge-blue'
+      'RECHAZADO': 'badge-red',   'FACTURADO': 'badge-blue'
     };
     return map[estado] || 'badge-yellow';
   }
