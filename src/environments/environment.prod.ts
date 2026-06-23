@@ -9,5 +9,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
 export const environment = {
     production: true,
-  apiUrl: 'https://sigcon-erp-production.up.railway.app' // <- Revisa que tenga el https:// obligatorio al inicio
+    apiUrl: 'https://sigcon-erp-production.up.railway.app'
 };
