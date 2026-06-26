@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
-
+import { environment } from "../../../environments/environment";
 export interface Cotizacion {
     id?: number;
     codigo?: string;
@@ -24,29 +24,21 @@ export interface Cotizacion {
     providedIn: 'root'
 })
 export class CotizacionService {
-    private apiurl = 'http://localhost:3000/cotizaciones';
+    private apiurl = `${environment.apiUrl}/cotizaciones`;
 
     constructor(private http: HttpClient) {}
 
-    private getHeaders(): HttpHeaders {
-        const user = localStorage.getItem('erp_user');
-        if (user) {
-            const usuario = JSON.parse(user);
-            const credentials = btoa(`${usuario.username}:123456`);
-            return new HttpHeaders({ Authorization: `Basic ${credentials}` });
-        }
-        return new HttpHeaders();
-    }
+    
 
     listarCotizaciones(): Observable<Cotizacion[]> {
-        return this.http.get<Cotizacion[]>(this.apiurl, { headers: this.getHeaders() });
+        return this.http.get<Cotizacion[]>(this.apiurl);
     }
 
     registrarCotizacion(cotizacion: Cotizacion): Observable<any> {
-        return this.http.post<any>(this.apiurl, cotizacion, { headers: this.getHeaders() });
+        return this.http.post<any>(this.apiurl, cotizacion);
     }
 
     actualizarEstado(id: number, estado: string): Observable<any> {
-        return this.http.patch<any>(`${this.apiurl}/${id}/estado`, { estado }, { headers: this.getHeaders() });
+        return this.http.patch<any>(`${this.apiurl}/${id}/estado`, { estado });
     }
 }

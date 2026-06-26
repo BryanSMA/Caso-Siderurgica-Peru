@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Usuario {
   id?: number;
@@ -10,32 +11,32 @@ export interface Usuario {
   rolNombre?: string;
   estado?: string;
 }
+
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
-  private url = 'http://localhost:3000/usuarios';
+  private url = `${environment.apiUrl}/usuarios`;
 
   constructor(private http: HttpClient) {}
 
-  private getHeaders(): HttpHeaders {
-    const user = localStorage.getItem('erp_user');
-    if (user) {
-      const usuario = JSON.parse(user);
-      const credentials = btoa(`${usuario.username}:123456`);
-      return new HttpHeaders({ Authorization: `Basic ${credentials}` });
-    }
-    return new HttpHeaders();
-  }
-
   listarUsuarios(): Observable<Usuario[]> {
-    return this.http.get<Usuario[]>(this.url, { headers: this.getHeaders() });
+    return this.http.get<Usuario[]>(this.url);
   }
 
-  crearUsuario(usuario: { username: string; password: string; rolId: number }): Observable<any> {
-    const body = {
-      username: usuario.username,
-      password: usuario.password,
-      rol: { id: usuario.rolId }
-    };
-    return this.http.post(this.url, body, { headers: this.getHeaders() });
+  crearUsuario(data: { username: string; password: string; rolId: number }): Observable<any> {
+    return this.http.post(this.url, {
+      username: data.username,
+      password: data.password,
+      rol: { id: data.rolId }
+    });
+  }
+
+  editarUsuario(id: number, data: { username: string; password?: string; rolId: number }): Observable<any> {
+    const body: any = { username: data.username, rol: { id: data.rolId } };
+    if (data.password) body.password = data.password;
+    return this.http.put(`${this.url}/${id}`, body);
+  }
+
+  eliminarUsuario(id: number): Observable<any> {
+    return this.http.delete(`${this.url}/${id}`);
   }
 }

@@ -1,20 +1,24 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+// src/app/features/dashboard/inventario/inventario.ts
+import { Component, OnInit, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { InventarioService, Inventario as InventarioBD } from '../../../core/services/inventario.service';
-import { AuthService } from '../../../core/services/auth.service'
+import { AuthService } from '../../../core/services/auth.service';
+import { CustomValidators } from '../../../core/validators/custom-validators';
 
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './inventario.html',
-   styles: []
+  styles: [],
+  encapsulation: ViewEncapsulation.None
 })
 export class InventarioComponent implements OnInit {
 
   inventarioBD: InventarioBD[] = [];
   alertasBajoStock = 0;
+  valorTotalInventario = 0;
   loadingInventario = false;
   inventarioSearch = '';
   inventarioFiltroEstado = '';
@@ -27,21 +31,48 @@ export class InventarioComponent implements OnInit {
   toastVisible = false;
   rolActual: string | null = null;
 
+  // ── Reactive Form ────────────────────────────────────────────────────────
+  form!: FormGroup;
+
   constructor(
     private inventarioService: InventarioService,
     private authService: AuthService,
+    private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {}
 
-  valorTotalInventario: number = 0;
+  ngOnInit() {
+    this.rolActual = this.authService.getRol();
+    this.initForm();
+    this.cargarInventario();
+    this.cargarAlertas();
+    this.cargarValorTotal();
+  }
 
-ngOnInit() {
-  this.rolActual = this.authService.getRol();
-  this.cargarInventario();
-  this.cargarAlertas();
-  this.cargarValorTotal(); // ← así
-}
+  // ── Inicializar formulario ───────────────────────────────────────────────
+  initForm() {
+    this.form = this.fb.group({
+      producto:      ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      categoria:     ['', [Validators.maxLength(60)]],
+      unidad:        ['unidad', [Validators.required, Validators.maxLength(30)]],
+      stock:         [0,  [Validators.required, Validators.min(0)]],
+      stockMinimo:   [10, [Validators.required, Validators.min(0)]],
+      precioUnitario:[0,  [Validators.required, Validators.min(0.01)]],
+    });
+  }
 
+  // ── Helpers de validación ────────────────────────────────────────────────
+  isInvalid(campo: string): boolean {
+    return CustomValidators.showError(this.form.get(campo));
+  }
+
+  errorMsg(campo: string, label: string): string {
+    const control = this.form.get(campo);
+    if (!control || !control.errors || !(control.touched || control.dirty)) return '';
+    return CustomValidators.getErrorMessage(control, label);
+  }
+
+  // ── Carga de datos ───────────────────────────────────────────────────────
   cargarInventario() {
     this.loadingInventario = true;
     this.inventarioService.listarInventario().subscribe({
@@ -59,16 +90,26 @@ ngOnInit() {
 
   cargarAlertas() {
     this.inventarioService.listarBajoStock().subscribe({
-      next: (data) => {
-        this.alertasBajoStock = data.total;
-        this.cdr.detectChanges();
-      },
+      next: (data) => { this.alertasBajoStock = data.total; this.cdr.detectChanges(); },
       error: () => {}
     });
   }
 
+  cargarValorTotal() {
+    this.inventarioService.obtenerValorTotal().subscribe({
+      next: (data) => { this.valorTotalInventario = data.valorTotal; this.cdr.detectChanges(); },
+      error: () => {}
+    });
+  }
+
+  puedeRegistrar(): boolean {
+    return this.rolActual === 'ADMIN' || this.rolActual === 'ALMACEN';
+  }
+
+  // ── Modal ────────────────────────────────────────────────────────────────
   openModalCrear() {
     this.modalMode = 'crear';
+    this.form.reset({ stock: 0, stockMinimo: 10, precioUnitario: 0, unidad: 'unidad' });
     this.inventarioForm = {};
     this.showModal = true;
   }
@@ -76,25 +117,38 @@ ngOnInit() {
   openModalEditar(p: InventarioBD) {
     this.modalMode = 'editar';
     this.inventarioForm = { ...p };
+    this.form.patchValue({
+      producto:       p.producto,
+      categoria:      p.categoria || '',
+      unidad:         p.unidad || 'unidad',
+      stock:          p.stock,
+      stockMinimo:    p.stockMinimo,
+      precioUnitario: p.precioUnitario || 0,
+    });
     this.showModal = true;
   }
 
   closeModal() {
     this.showModal = false;
+    this.inventarioForm = {};
   }
 
+  // ── Guardar ──────────────────────────────────────────────────────────────
   guardarInventario() {
-    if (!this.inventarioForm.producto) {
-      this.showToast('El nombre del producto es obligatorio', 'error'); return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.showToast('Corrija los errores del formulario antes de continuar.', 'error');
+      return;
     }
     this.guardando = true;
+    const val = this.form.value;
     const item: InventarioBD = {
-      producto: this.inventarioForm.producto!,
-      categoria: this.inventarioForm.categoria,
-      stock: Number(this.inventarioForm.stock) || 0,
-      stockMinimo: Number(this.inventarioForm.stockMinimo) || 10,
-      precioUnitario: Number(this.inventarioForm.precioUnitario) || 0,
-      unidad: this.inventarioForm.unidad || 'unidad'
+      producto:       val.producto,
+      categoria:      val.categoria || undefined,
+      unidad:         val.unidad,
+      stock:          Number(val.stock),
+      stockMinimo:    Number(val.stockMinimo),
+      precioUnitario: Number(val.precioUnitario),
     };
 
     if (this.modalMode === 'crear') {
@@ -117,13 +171,14 @@ ngOnInit() {
           this.showToast('✅ Producto actualizado correctamente', 'success');
           this.cargarInventario();
           this.cargarAlertas();
-           this.cargarValorTotal(); 
+          this.cargarValorTotal();
         },
         error: () => { this.guardando = false; this.showToast('Error al actualizar producto', 'error'); }
       });
     }
   }
 
+  // ── Filtros ──────────────────────────────────────────────────────────────
   get inventarioBDFiltrado(): InventarioBD[] {
     return this.inventarioBD.filter(p => {
       const search = this.inventarioSearch.toLowerCase();
@@ -143,7 +198,7 @@ ngOnInit() {
   }
 
   formatMoney(n: number): string {
-    return 'S/ ' + n.toLocaleString('es-PE');
+    return 'S/ ' + Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2 });
   }
 
   getBadgeClass(estado: string): string {
@@ -154,21 +209,7 @@ ngOnInit() {
   }
 
   showToast(msg: string, type: 'success' | 'error' | 'info' = 'success') {
-    this.toastMsg = msg;
-    this.toastType = type;
-    this.toastVisible = true;
-    setTimeout(() => this.toastVisible = false, 3000);
+    this.toastMsg = msg; this.toastType = type; this.toastVisible = true;
+    setTimeout(() => { this.toastVisible = false; this.cdr.detectChanges(); }, 4000);
   }
-cargarValorTotal() {
-  this.inventarioService.obtenerValorTotal().subscribe({
-    next: (data) => {
-      this.valorTotalInventario = data.valorTotal;
-      this.cdr.detectChanges();
-    },
-    error: () => {}
-  });
-}
-  
-// En ngOnInit o cargarInventario():
-
 }

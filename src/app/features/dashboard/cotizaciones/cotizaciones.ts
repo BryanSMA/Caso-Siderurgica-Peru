@@ -1,23 +1,25 @@
 // src/app/features/dashboard/cotizaciones/cotizaciones.ts
 import { Component, OnInit, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { CotizacionService, Cotizacion } from '../../../core/services/cotizacion.service';
 import { InventarioService, Inventario } from '../../../core/services/inventario.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { CustomValidators } from '../../../core/validators/custom-validators';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-cotizaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './cotizaciones.html',
   styles: [],
   encapsulation: ViewEncapsulation.None
 })
 export class CotizacionesComponent implements OnInit {
 
-  private readonly API = 'http://localhost:3000';
+  private readonly API = environment.apiUrl;
 
   cotizaciones: Cotizacion[] = [];
   cotizacionSearch = '';
@@ -26,7 +28,7 @@ export class CotizacionesComponent implements OnInit {
   loadingAction = false;
   showModal = false;
   modalMode: 'crear' | 'ver' | 'confirmar' = 'crear';
-  cotizacionForm: Partial<Cotizacion> = { cantidad: 1, precio_unitario: 0 };
+  cotizacionForm: Partial<Cotizacion> = {};
   guardando = false;
   toastMsg = '';
   toastType: 'success' | 'error' | 'info' = 'success';
@@ -34,15 +36,14 @@ export class CotizacionesComponent implements OnInit {
   usuarioActual: any = null;
   rolActual: string | null = null;
 
-  // ── Inventario / dropdown ────────────────────────────────────────────────
+  form!: FormGroup;
+
   productosInventario: Inventario[] = [];
   productosFiltrados: Inventario[] = [];
   productoSearch = '';
   showDropdownProducto = false;
   productoSeleccionado: Inventario | null = null;
-  errorCantidad = '';
 
-  // ── Cotización recién guardada para ofrecer conversión ────────────────────
   cotizacionGuardada: Cotizacion | null = null;
 
   constructor(
@@ -50,12 +51,14 @@ export class CotizacionesComponent implements OnInit {
     private inventarioService: InventarioService,
     private authService: AuthService,
     private http: HttpClient,
+    private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.usuarioActual = this.authService.getUser();
-    this.rolActual = this.authService.getRol();
+    this.rolActual     = this.authService.getRol();
+    this.initForm();
     this.cargarCotizaciones();
     this.cargarInventario();
     document.addEventListener('click', () => {
@@ -64,39 +67,49 @@ export class CotizacionesComponent implements OnInit {
     });
   }
 
-  private getHeaders(): HttpHeaders {
-    const userStr = localStorage.getItem('erp_user');
-    let token = '';
-    if (userStr) {
-      try {
-        const u = JSON.parse(userStr);
-        token = btoa(`${u.username}:123456`);
-      } catch { token = userStr; }
-    }
-    return new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': `Basic ${token}` });
+  initForm() {
+    this.form = this.fb.group({
+      cliente:         ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      ruc:             ['', [Validators.pattern(CustomValidators.REGEX.ruc), CustomValidators.noSameDigits()]],
+      producto:        ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      cantidad:        [1,  [Validators.required, Validators.min(1)]],
+      precio_unitario: [0,  [Validators.required, Validators.min(0.01)]],
+    });
   }
 
-  // ── Cargar inventario ────────────────────────────────────────────────────
+  isInvalid(campo: string): boolean {
+    return CustomValidators.showError(this.form.get(campo));
+  }
+
+  errorMsg(campo: string, label: string): string {
+    const control = this.form.get(campo);
+    if (!control || !control.errors || !(control.touched || control.dirty)) return '';
+    if (campo === 'cantidad' && control.errors['max']) {
+      return `Stock disponible: ${this.productoSeleccionado?.stock ?? 0} ${this.productoSeleccionado?.unidad ?? 'unidades'}`;
+    }
+    if (campo === 'cantidad' && control.errors['min']) {
+      return 'La cantidad debe ser mayor a 0.';
+    }
+    return CustomValidators.getErrorMessage(control, label);
+  }
+
   cargarInventario() {
     this.inventarioService.listarInventario().subscribe({
       next: (data) => {
-        // Solo productos con stock > 0
         this.productosInventario = data.filter(p => p.stock > 0);
-        this.productosFiltrados = [...this.productosInventario];
+        this.productosFiltrados  = [...this.productosInventario];
       },
       error: () => {}
     });
   }
 
-  // ── Dropdown producto ────────────────────────────────────────────────────
   onProductoInput(event: Event) {
     const val = (event.target as HTMLInputElement).value;
     this.productoSearch = val;
-    this.cotizacionForm.producto = val;
+    this.form.get('producto')?.setValue(val, { emitEvent: false });
     this.productoSeleccionado = null;
-    this.cotizacionForm.precio_unitario = 0;
-    this.errorCantidad = '';
-
+    this.form.get('precio_unitario')?.setValue(0);
+    this._actualizarMaxCantidad(null);
     this.productosFiltrados = this.productosInventario.filter(p =>
       p.producto.toLowerCase().includes(val.toLowerCase()) ||
       (p.categoria || '').toLowerCase().includes(val.toLowerCase())
@@ -108,12 +121,11 @@ export class CotizacionesComponent implements OnInit {
   seleccionarProducto(p: Inventario, event: Event) {
     event.stopPropagation();
     this.productoSeleccionado = p;
-    this.cotizacionForm.producto = p.producto;
     this.productoSearch = p.producto;
-    // Precio fijo del inventario
-    this.cotizacionForm.precio_unitario = p.precioUnitario || p.precio_unitario || 0;
+    this.form.get('producto')?.setValue(p.producto);
+    this.form.get('precio_unitario')?.setValue(p.precioUnitario || p.precio_unitario || 0);
+    this._actualizarMaxCantidad(p.stock);
     this.showDropdownProducto = false;
-    this.errorCantidad = '';
     this.cdr.detectChanges();
   }
 
@@ -126,18 +138,17 @@ export class CotizacionesComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ── Validar cantidad contra stock ────────────────────────────────────────
-  onCantidadChange() {
-    this.errorCantidad = '';
-    if (!this.productoSeleccionado) return;
-    const cant = Number(this.cotizacionForm.cantidad);
-    if (cant <= 0) { this.errorCantidad = 'La cantidad debe ser mayor a 0.'; return; }
-    if (cant > this.productoSeleccionado.stock) {
-      this.errorCantidad = `Stock disponible: ${this.productoSeleccionado.stock} ${this.productoSeleccionado.unidad || 'unidades'}`;
+  private _actualizarMaxCantidad(maxStock: number | null) {
+    const cantidadCtrl = this.form.get('cantidad');
+    if (!cantidadCtrl) return;
+    if (maxStock !== null) {
+      cantidadCtrl.setValidators([Validators.required, Validators.min(1), Validators.max(maxStock)]);
+    } else {
+      cantidadCtrl.setValidators([Validators.required, Validators.min(1)]);
     }
+    cantidadCtrl.updateValueAndValidity();
   }
 
-  // ── CRUD Cotizaciones ────────────────────────────────────────────────────
   cargarCotizaciones() {
     this.loadingCotizaciones = true;
     this.cotizacionService.listarCotizaciones().subscribe({
@@ -150,46 +161,45 @@ export class CotizacionesComponent implements OnInit {
 
   openModalCrear() {
     this.modalMode = 'crear';
-    this.cotizacionForm = { cantidad: 1, precio_unitario: 0 };
-    this.productoSearch = '';
+    this.form.reset({ cantidad: 1, precio_unitario: 0 });
+    this.cotizacionForm      = {};
+    this.productoSearch      = '';
     this.productoSeleccionado = null;
-    this.errorCantidad = '';
     this.showDropdownProducto = false;
     this.showModal = true;
   }
 
   openModalVer(c: Cotizacion) {
-    this.modalMode = 'ver';
+    this.modalMode    = 'ver';
     this.cotizacionForm = { ...c };
-    this.showModal = true;
+    this.showModal    = true;
   }
 
   closeModal() {
-    this.showModal = false;
+    this.showModal          = false;
     this.cotizacionGuardada = null;
     this.showDropdownProducto = false;
   }
 
   guardarCotizacion() {
-    if (!this.cotizacionForm.cliente || !this.cotizacionForm.producto) {
-      this.showToast('Complete cliente y producto', 'error'); return;
-    }
-    if (this.errorCantidad) {
-      this.showToast(this.errorCantidad, 'error'); return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.showToast('Corrija los errores del formulario antes de continuar.', 'error');
+      return;
     }
     this.guardando = true;
+    const val = this.form.value;
     const nueva = {
-      cliente: this.cotizacionForm.cliente!,
-      ruc: this.cotizacionForm.ruc || '',
-      producto: this.cotizacionForm.producto!,
-      cantidad: Number(this.cotizacionForm.cantidad),
-      precio_unitario: Number(this.cotizacionForm.precio_unitario),
-      usuario_id: this.usuarioActual?.id || null
+      cliente:         val.cliente,
+      ruc:             val.ruc || '',
+      producto:        val.producto,
+      cantidad:        Number(val.cantidad),
+      precio_unitario: Number(val.precio_unitario),
+      usuario_id:      this.usuarioActual?.id || null
     };
     this.cotizacionService.registrarCotizacion(nueva).subscribe({
       next: (res) => {
         this.guardando = false;
-        // Guardar la cotización creada y mostrar modal de confirmación
         const cotCreada: Cotizacion = res.cotizacion || { ...nueva, codigo: res.codigo, id: res.id, estado: 'PENDIENTE' };
         this.cotizacionGuardada = cotCreada;
         this.modalMode = 'confirmar';
@@ -207,14 +217,22 @@ export class CotizacionesComponent implements OnInit {
     });
   }
 
-  // ── Convertir a pedido ───────────────────────────────────────────────────
+  // CN-C07 — mensaje claro según el estado de la cotización
   convertirAPedido(c: Cotizacion) {
+    if (c.estado === 'RECHAZADA') {
+      this.showToast('No se puede convertir: la cotización está RECHAZADA. Debe estar APROBADA.', 'error');
+      return;
+    }
+    if (c.estado === 'PENDIENTE') {
+      this.showToast('La cotización debe estar APROBADA antes de convertirla a pedido.', 'info');
+      return;
+    }
+    if (c.estado === 'CONVERTIDA') {
+      this.showToast('Esta cotización ya fue convertida a pedido anteriormente.', 'info');
+      return;
+    }
     this.loadingAction = true;
-    this.http.post<any>(
-      `${this.API}/cotizaciones/${c.id}/convertir-pedido`,
-      {},
-      { headers: this.getHeaders() }
-    ).subscribe({
+    this.http.post<any>(`${this.API}/cotizaciones/${c.id}/convertir-pedido`, {}).subscribe({
       next: (res) => {
         const pedidoCodigo = res.pedido?.codigo || res.codigo || '—';
         this.showToast(`✅ Pedido ${pedidoCodigo} creado desde cotización ${c.codigo}`, 'success');
@@ -223,7 +241,9 @@ export class CotizacionesComponent implements OnInit {
         this.closeModal();
       },
       error: (err) => {
-        this.showToast(err.error?.error || 'Error al convertir cotización', 'error');
+        // Mensaje del backend como fallback por si algo inesperado llega al servidor
+        const msg = err.error?.error || 'Error al convertir la cotización.';
+        this.showToast(msg, 'error');
         this.loadingAction = false;
         this.cdr.detectChanges();
       }
@@ -231,23 +251,19 @@ export class CotizacionesComponent implements OnInit {
   }
 
   convertirDesdeModal() {
-    if (this.cotizacionForm?.id) {
-      this.convertirAPedido(this.cotizacionForm as Cotizacion);
-    }
+    if (this.cotizacionForm?.id) this.convertirAPedido(this.cotizacionForm as Cotizacion);
   }
 
   convertirGuardada() {
     if (this.cotizacionGuardada?.id) {
       this.convertirAPedido(this.cotizacionGuardada);
     } else {
-      // Si no tenemos id aún, recargamos y buscamos por código
       this.cargarCotizaciones();
       this.closeModal();
       this.showToast('Cotización registrada. Apruébala para convertir a pedido.', 'info');
     }
   }
 
-  // ── Filtros ───────────────────────────────────────────────────────────────
   get cotizacionesFiltradas(): Cotizacion[] {
     return this.cotizaciones.filter(c => {
       const search = this.cotizacionSearch.toLowerCase();
@@ -268,7 +284,7 @@ export class CotizacionesComponent implements OnInit {
   getBadgeClass(estado: string): string {
     const map: Record<string, string> = {
       'PENDIENTE': 'badge-orange', 'APROBADA': 'badge-green',
-      'RECHAZADA': 'badge-red', 'CONVERTIDA': 'badge-blue'
+      'RECHAZADA': 'badge-red',   'CONVERTIDA': 'badge-blue'
     };
     return map[estado] || 'badge-yellow';
   }

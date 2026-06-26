@@ -1,30 +1,27 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { AbastecimientoService, Presupuesto } from '../../../core/services/abastecimiento.service';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  AbastecimientoService,
+  OrdenCompra,
+  Presupuesto,
+  RegistrarCompraResultado
+} from '../../../core/services/abastecimiento.service';
 import { ProveedorService, Proveedor } from '../../../core/services/proveedor.service';
 import { InventarioService, Inventario } from '../../../core/services/inventario.service';
+import { CustomValidators } from '../../../core/validators/custom-validators';
 
-export interface OrdenCompra {
-  id?: number;
-  codigo?: string;
-  proveedorId: number;
-  producto: string;
-  cantidad?: string;
-  total: number;
-  fechaEntrega?: string;
-  estado?: 'Aprobada' | 'Pendiente' | 'En tránsito' | 'Rechazada';
-  _open?: boolean;
-}
+// OrdenCompra ya NO se define aquí — viene del service ↑
 
 @Component({
   selector: 'app-abastecimiento',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './abastecimiento.html',
   styles: []
 })
 export class AbastecimientoComponent implements OnInit {
+
   ordenes: OrdenCompra[] = [];
   proveedores: Proveedor[] = [];
   inventarios: Inventario[] = [];
@@ -37,79 +34,161 @@ export class AbastecimientoComponent implements OnInit {
   deleteTarget: OrdenCompra | null = null;
   ordenActivaCompra: OrdenCompra | null = null;
   toastMsg = ''; toastType: 'success'|'error'|'info' = 'success'; toastVisible = false;
+  mostrarSugerenciaOrden = false;
+  showModalResultado = false;
+  resultadoCompra: RegistrarCompraResultado | null = null;
+
+  form!: FormGroup;
 
   constructor(
     private abastService: AbastecimientoService,
     private proveedorService: ProveedorService,
     private inventarioService: InventarioService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private fb: FormBuilder
   ) {}
 
   ngOnInit() {
+    this.initForm();
     this.proveedorService.listar().subscribe(p => {
-      this.proveedores = p;
-      this.cdr.detectChanges();
-      this.cargarOrdenes();
+      this.proveedores = p; this.cdr.detectChanges(); this.cargarOrdenes();
     });
     this.cargarPresupuesto();
-    this.inventarioService.listarInventario().subscribe(i => this.inventarios = i);
+    this.cargarInventarios();
   }
 
-  cargarOrdenes() {
-    this.abastService.listarOrdenes().subscribe(o => {
-      this.ordenes = o;
-      this.cdr.detectChanges();
+  initForm() {
+    this.form = this.fb.group({
+      proveedorId:  [null, Validators.required],
+      producto:     ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      cantidad:     ['', []],
+      total:        [null, [Validators.required, Validators.min(0.01)]],
+      fechaEntrega: ['', []],
     });
+  }
+
+  isInvalid(campo: string): boolean { return CustomValidators.showError(this.form.get(campo)); }
+  errorMsg(campo: string, label: string): string { return CustomValidators.getErrorMessage(this.form.get(campo), label); }
+
+  cargarOrdenes() {
+    this.abastService.listarOrdenes().subscribe(o => { this.ordenes = o; this.cdr.detectChanges(); });
+  }
+
+  cargarInventarios() {
+    this.inventarioService.listarInventario().subscribe(i => { this.inventarios = i; this.cdr.detectChanges(); });
   }
 
   cargarPresupuesto() {
-    this.abastService.obtenerPresupuesto().subscribe(p => {
-      this.presupuesto = p;
-      this.cdr.detectChanges();
-    });
+    this.abastService.obtenerPresupuesto().subscribe(p => { this.presupuesto = p; this.cdr.detectChanges(); });
   }
 
   nombreProveedor(id: number): string {
     return this.proveedores.find(p => p.id === id)?.nombre || '—';
   }
 
-  openModalCrear() { this.modalMode = 'crear'; this.ordenForm = { estado: 'Pendiente' }; this.showModal = true; }
-  openModalEditar(o: OrdenCompra) { this.modalMode = 'editar'; this.ordenForm = { ...o }; this.showModal = true; }
-  pedirEliminar(o: OrdenCompra) { this.deleteTarget = o; this.modalMode = 'eliminar'; this.showModal = true; }
-  abrirRegistrarCompra(o: OrdenCompra) { this.ordenActivaCompra = o; this.compraForm = {}; this.modalMode = 'compra'; this.showModal = true; }
-  closeModal() { this.showModal = false; this.deleteTarget = null; this.ordenActivaCompra = null; }
+  openModalCrear() {
+    this.modalMode = 'crear';
+    this.form.reset();
+    this.ordenForm = { estado: 'Pendiente' };
+    this.showModal = true;
+  }
+
+  openModalEditar(o: OrdenCompra) {
+    this.modalMode = 'editar';
+    this.ordenForm = { ...o };
+    this.form.patchValue({
+      proveedorId: o.proveedorId, producto: o.producto,
+      cantidad: o.cantidad, total: o.total, fechaEntrega: o.fechaEntrega
+    });
+    this.showModal = true;
+  }
+
+  pedirEliminar(o: OrdenCompra) {
+    this.deleteTarget = o; this.modalMode = 'eliminar'; this.showModal = true;
+  }
+
+  abrirRegistrarCompra(o: OrdenCompra) {
+    this.ordenActivaCompra = o; this.compraForm = {};
+    this.mostrarSugerenciaOrden = false; this.modalMode = 'compra'; this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false; this.deleteTarget = null;
+    this.ordenActivaCompra = null; this.mostrarSugerenciaOrden = false;
+  }
+
+  toggleSugerenciaOrden() { this.mostrarSugerenciaOrden = !this.mostrarSugerenciaOrden; }
+
+  cantidadSugerida(): number | null {
+    const texto = this.ordenActivaCompra?.cantidad;
+    if (!texto) return null;
+    const match = texto.match(/[\d.]+/);
+    return match ? parseFloat(match[0]) : null;
+  }
+
+  precioUnitarioSugerido(): number | null {
+    const cantidad = this.cantidadSugerida();
+    const total = this.ordenActivaCompra?.total;
+    if (!cantidad || !total) return null;
+    return Math.round((total / cantidad) * 100) / 100;
+  }
+
+  usarDatosDeOrden() {
+    const cantidad = this.cantidadSugerida();
+    const precio = this.precioUnitarioSugerido();
+    if (cantidad != null) this.compraForm.cantidad = cantidad;
+    if (precio != null) this.compraForm.precioUnitario = precio;
+    this.mostrarSugerenciaOrden = false;
+  }
 
   guardarOrden() {
-    if (!this.ordenForm.proveedorId || !this.ordenForm.producto) { this.showToast('Complete los campos requeridos', 'error'); return; }
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    const data = { ...this.ordenForm, ...this.form.value } as OrdenCompra;
     if (this.modalMode === 'crear') {
-      this.abastService.crearOrden(this.ordenForm as OrdenCompra).subscribe({
-        next: () => { this.showToast('Orden de compra creada'); this.cargarOrdenes(); this.cargarPresupuesto(); this.closeModal(); },
+      this.abastService.crearOrden(data).subscribe({
+        next: () => {
+          this.showToast('Orden de compra creada');
+          this.cargarOrdenes(); this.cargarPresupuesto(); this.closeModal();
+        },
         error: err => this.showToast(err.error?.message || 'Capital insuficiente', 'error')
       });
     } else {
       const idx = this.ordenes.findIndex(o => o.id === this.ordenForm.id);
-      if (idx !== -1) this.ordenes[idx] = { ...this.ordenes[idx], ...this.ordenForm } as OrdenCompra;
+      if (idx !== -1) this.ordenes[idx] = { ...this.ordenes[idx], ...data };
       this.showToast('Orden actualizada'); this.closeModal();
     }
   }
 
   registrarCompra() {
-    if (!this.ordenActivaCompra || !this.compraForm.cantidad || !this.compraForm.precioUnitario) { this.showToast('Complete cantidad y precio unitario', 'error'); return; }
+    if (!this.ordenActivaCompra || !this.compraForm.cantidad || !this.compraForm.precioUnitario) {
+      this.showToast('Complete cantidad y precio unitario', 'error'); return;
+    }
     const o = this.ordenActivaCompra;
     this.abastService.registrarCompra({
-      ordenCompraId: o.id, proveedorId: o.proveedorId, inventarioId: this.compraForm.inventarioId,
-      producto: o.producto, cantidad: this.compraForm.cantidad, precioUnitario: this.compraForm.precioUnitario,
+      ordenCompraId: o.id,
+      proveedorId: o.proveedorId,
+      inventarioId: this.compraForm.inventarioId,
+      producto: o.producto,
+      cantidad: this.compraForm.cantidad,
+      precioUnitario: this.compraForm.precioUnitario,
       total: this.compraForm.cantidad * this.compraForm.precioUnitario
     }).subscribe({
-      next: () => { this.showToast('Compra registrada, stock actualizado'); this.closeModal(); },
+      next: (resultado) => {
+        this.closeModal(); this.cargarInventarios();
+        this.resultadoCompra = resultado;
+        this.showModalResultado = true; this.cdr.markForCheck();
+      },
       error: err => this.showToast(err.error?.message || 'Error al registrar compra', 'error')
     });
   }
 
+  cerrarModalResultado() { this.showModalResultado = false; this.resultadoCompra = null; }
+
   confirmarEliminar() {
     if (!this.deleteTarget?.id) return;
     this.abastService.eliminarOrden(this.deleteTarget.id).subscribe(() => {
-      this.cargarOrdenes(); this.cargarPresupuesto(); this.showToast('Orden eliminada'); this.closeModal();
+      this.cargarOrdenes(); this.cargarPresupuesto();
+      this.showToast('Orden eliminada'); this.closeModal();
     });
   }
 
@@ -120,8 +199,7 @@ export class AbastecimientoComponent implements OnInit {
         o.estado = estado as OrdenCompra['estado'];
         o._open = false;
         this.showToast(`Orden ${o.codigo} → ${estado}`);
-        this.cargarOrdenes();
-        this.cargarPresupuesto();
+        this.cargarOrdenes(); this.cargarPresupuesto();
       },
       error: err => this.showToast(err.error?.message || 'Error al cambiar estado', 'error')
     });
@@ -147,7 +225,7 @@ export class AbastecimientoComponent implements OnInit {
   }
 
   showToast(msg: string, type: 'success'|'error'|'info' = 'success') {
-    this.toastMsg = msg; this.toastType = type; this.toastVisible = true;
-    setTimeout(() => this.toastVisible = false, 3000);
+    this.toastMsg = msg; this.toastType = type; this.toastVisible = true; this.cdr.markForCheck();
+    setTimeout(() => { this.toastVisible = false; this.cdr.markForCheck(); }, 3000);
   }
 }

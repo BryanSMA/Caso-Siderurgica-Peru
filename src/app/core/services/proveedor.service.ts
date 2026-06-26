@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Proveedor {
   id?: number; nombre: string; origen?: string; ruc: string;
@@ -10,7 +11,7 @@ export interface Proveedor {
 
 @Injectable({ providedIn: 'root' })
 export class ProveedorService {
-  private url = 'http://localhost:3000/proveedor';
+  private url = `${environment.apiUrl}/proveedor`;
   constructor(private http: HttpClient) {}
 
   listar(): Observable<Proveedor[]> { return this.http.get<Proveedor[]>(this.url); }
