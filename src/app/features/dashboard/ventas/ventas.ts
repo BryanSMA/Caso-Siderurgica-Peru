@@ -1,55 +1,34 @@
 // src/app/features/dashboard/ventas/ventas.ts
 import { Component, OnInit, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { VentaService, Venta } from '../../../core/services/ventas.service';
 import { AuthService } from '../../../core/services/auth.service';
 
-export interface Venta {
-  id?: number;
-  codigo?: string;
-  cliente: string;
-  ruc: string;
-  producto: string;
-  cantidad: number;
-  precioUnitario?: number;
-  precio_unitario?: number;
-  subtotal?: number;
-  igv?: number;
-  total?: number;
-  vendedor?: string;
-  estado?: string;
-  fechaVenta?: string;
-  pedidoId?: number;
-  cotizacionId?: number;
-  createdAt?: string;
-}
+// Venta ya NO se define aquí — viene de venta.service.ts ↑
 
 @Component({
   selector: 'app-ventas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './ventas.html',
   styles: [],
   encapsulation: ViewEncapsulation.None
 })
 export class VentasComponent implements OnInit {
 
-  private readonly API = 'http://localhost:3000';
-
   ventas: Venta[] = [];
-  ventaSearch = '';
+  ventaSearch       = '';
   ventaFiltroEstado = '';
-  loadingVentas = false;
-  loadingAction = false;
+  loadingVentas     = false;
+  loadingAction     = false;
 
-  showModal = false;
-  modalMode: 'crear' | 'ver' | 'eliminar' = 'crear';
+  showModal  = false;
+  modalMode: 'ver' | 'eliminar' = 'ver';
   ventaForm: Partial<Venta> = {};
   deleteTarget: Venta | null = null;
 
-  guardando = false;
-  toastMsg = '';
+  toastMsg     = '';
   toastType: 'success' | 'error' | 'info' = 'success';
   toastVisible = false;
 
@@ -57,36 +36,21 @@ export class VentasComponent implements OnInit {
   rolActual: string | null = null;
 
   constructor(
-    private http: HttpClient,
+    private ventaService: VentaService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.usuarioActual = this.authService.getUser();
-    this.rolActual = this.authService.getRol();
+    this.rolActual     = this.authService.getRol();
     this.cargarVentas();
   }
 
-  // ── Headers Basic Auth ────────────────────────────────────────────────────
-  private getHeaders(): HttpHeaders {
-    const userStr = localStorage.getItem('erp_user');
-    let token = '';
-    if (userStr) {
-      try {
-        const u = JSON.parse(userStr);
-        token = btoa(`${u.username}:${u.password}`);
-      } catch {
-        token = userStr;
-      }
-    }
-    return new HttpHeaders({ 'Content-Type': 'application/json', 'Authorization': `Basic ${token}` });
-  }
-
-  // ── Cargar ventas desde backend ───────────────────────────────────────────
+  // ── Cargar ventas ─────────────────────────────────────────────────────────
   cargarVentas() {
     this.loadingVentas = true;
-    this.http.get<Venta[]>(`${this.API}/ventas`, { headers: this.getHeaders() }).subscribe({
+    this.ventaService.listarVentas().subscribe({
       next: (data) => {
         this.ventas = data;
         this.loadingVentas = false;
@@ -99,34 +63,10 @@ export class VentasComponent implements OnInit {
     });
   }
 
-  // ── Generar Venta desde un Pedido APROBADO ────────────────────────────────
-  // Llamado desde pedidos.ts o desde un botón externo vía referencia
-  generarVentaDesdePedido(pedidoId: number, pedidoCodigo: string) {
-    if (!confirm(`¿Generar venta para el pedido ${pedidoCodigo}?`)) return;
-    this.loadingAction = true;
-    this.http.post<Venta>(
-      `${this.API}/ventas/desde-pedido/${pedidoId}`, {},
-      { headers: this.getHeaders() }
-    ).subscribe({
-      next: (venta) => {
-        this.showToast(`✅ Venta ${venta.codigo} generada. Total: S/ ${Number(venta.total).toFixed(2)}`, 'success');
-        this.cargarVentas();
-        this.loadingAction = false;
-      },
-      error: (err) => {
-        this.showToast(err.error?.error || 'Error al generar la venta', 'error');
-        this.loadingAction = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  // ── Cambiar estado de una venta ───────────────────────────────────────────
+  // ── Cambiar estado ────────────────────────────────────────────────────────
   cambiarEstado(v: Venta, estado: string) {
-    this.http.patch<Venta>(
-      `${this.API}/ventas/${v.id}/estado`, { estado },
-      { headers: this.getHeaders() }
-    ).subscribe({
+    if (!v.id) return;
+    this.ventaService.cambiarEstado(v.id, estado).subscribe({
       next: (actualizada) => {
         v.estado = actualizada.estado;
         this.showToast(`Venta ${v.codigo} → ${estado}`);
@@ -136,14 +76,22 @@ export class VentasComponent implements OnInit {
     });
   }
 
-  // ── Generar Despacho desde una Venta APROBADO ─────────────────────────────
+  // ── Aprobar / Anular ──────────────────────────────────────────────────────
+  aprobarVenta(v: Venta) {
+    if (!confirm(`¿Aprobar la venta ${v.codigo}?`)) return;
+    this.cambiarEstado(v, 'APROBADO');
+  }
+
+  anularVenta(v: Venta) {
+    if (!confirm(`¿Anular la venta ${v.codigo}? Esta acción no se puede deshacer.`)) return;
+    this.cambiarEstado(v, 'ANULADO');
+  }
+
+  // ── Generar Despacho ──────────────────────────────────────────────────────
   generarDespacho(v: Venta) {
-    if (!confirm(`¿Generar despacho para la venta ${v.codigo}?`)) return;
+    if (!v.id || !confirm(`¿Generar despacho para la venta ${v.codigo}?`)) return;
     this.loadingAction = true;
-    this.http.post<any>(
-      `${this.API}/despachos/desde-venta/${v.id}`, {},
-      { headers: this.getHeaders() }
-    ).subscribe({
+    this.ventaService.generarDespacho(v.id).subscribe({
       next: (despacho) => {
         this.showToast(`✅ Despacho ${despacho.codigo} generado correctamente`, 'success');
         this.cargarVentas();
@@ -157,42 +105,71 @@ export class VentasComponent implements OnInit {
     });
   }
 
-  // ── Aprobar venta directamente ────────────────────────────────────────────
-  aprobarVenta(v: Venta) {
-    if (!confirm(`¿Aprobar la venta ${v.codigo}?`)) return;
-    this.cambiarEstado(v, 'APROBADO');
-  }
-
-  anularVenta(v: Venta) {
-    if (!confirm(`¿Anular la venta ${v.codigo}? Esta acción no se puede deshacer.`)) return;
-    this.cambiarEstado(v, 'ANULADO');
+  // ── Generar Venta desde Pedido ────────────────────────────────────────────
+  generarVentaDesdePedido(pedidoId: number, pedidoCodigo: string) {
+    if (!confirm(`¿Generar venta para el pedido ${pedidoCodigo}?`)) return;
+    this.loadingAction = true;
+    this.ventaService.generarDesdePedido(pedidoId).subscribe({
+      next: (venta) => {
+        this.showToast(`✅ Venta ${venta.codigo} generada. Total: S/ ${Number(venta.total).toFixed(2)}`, 'success');
+        this.cargarVentas();
+        this.loadingAction = false;
+      },
+      error: (err) => {
+        this.showToast(err.error?.error || 'Error al generar la venta', 'error');
+        this.loadingAction = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // ── Modal ─────────────────────────────────────────────────────────────────
-  openModalVer(v: Venta) { this.modalMode = 'ver'; this.ventaForm = { ...v }; this.showModal = true; }
-  pedirEliminar(v: Venta) { this.modalMode = 'eliminar'; this.deleteTarget = v; this.showModal = true; }
-  closeModal() { this.showModal = false; this.deleteTarget = null; }
+  openModalVer(v: Venta) {
+    this.modalMode = 'ver';
+    this.ventaForm = { ...v };
+    this.showModal = true;
+  }
 
-  // ── Filtros y utilidades ──────────────────────────────────────────────────
+  pedirEliminar(v: Venta) {
+    this.modalMode    = 'eliminar';
+    this.deleteTarget = v;
+    this.showModal    = true;
+  }
+
+  closeModal() {
+    this.showModal    = false;
+    this.deleteTarget = null;
+  }
+
+  onAprobarVentaModal()    { this.aprobarVenta(this.ventaForm as Venta);    this.closeModal(); }
+  onAnularVentaModal()     { this.anularVenta(this.ventaForm as Venta);     this.closeModal(); }
+  onGenerarDespachoModal() { this.generarDespacho(this.ventaForm as Venta); this.closeModal(); }
+
+  // ── Filtros ───────────────────────────────────────────────────────────────
   get ventasFiltradas(): Venta[] {
     return this.ventas.filter(v => {
       const s = this.ventaSearch.toLowerCase();
       const matchSearch = !this.ventaSearch ||
-        v.codigo?.toLowerCase().includes(s) ||
+        v.codigo?.toLowerCase().includes(s)  ||
         v.cliente?.toLowerCase().includes(s) ||
-        v.producto?.toLowerCase().includes(s) ||
+        v.producto?.toLowerCase().includes(s)||
         v.ruc?.toLowerCase().includes(s);
       const matchEstado = !this.ventaFiltroEstado || v.estado === this.ventaFiltroEstado;
       return matchSearch && matchEstado;
     });
   }
 
-  getVentasTotales(): number { return this.ventas.reduce((s, v) => s + Number(v.total || 0), 0); }
-  getVentasPendientes(): number { return this.ventas.filter(v => v.estado === 'PENDIENTE').length; }
-  getVentasAprobadas(): number { return this.ventas.filter(v => v.estado === 'APROBADO').length; }
+  // ── Estadísticas ──────────────────────────────────────────────────────────
+  getVentasTotales():     number { return this.ventas.reduce((s, v) => s + Number(v.total || 0), 0); }
+  getVentasPendientes():  number { return this.ventas.filter(v => v.estado === 'PENDIENTE').length; }
+  getVentasAprobadas():   number { return this.ventas.filter(v => v.estado === 'APROBADO').length; }
   getVentasCompletadas(): number { return this.ventas.filter(v => v.estado === 'COMPLETADO').length; }
 
-  formatMoney(n: number): string { return 'S/ ' + Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2 }); }
+  // ── Utilidades ────────────────────────────────────────────────────────────
+  formatMoney(n: number): string {
+    return 'S/ ' + Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2 });
+  }
+
   formatDate(d?: string): string {
     if (!d) return '—';
     return new Date(d).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -208,8 +185,11 @@ export class VentasComponent implements OnInit {
     return map[estado] || 'badge-yellow';
   }
 
+  // ── Toast ─────────────────────────────────────────────────────────────────
   showToast(msg: string, type: 'success' | 'error' | 'info' = 'success') {
-    this.toastMsg = msg; this.toastType = type; this.toastVisible = true;
+    this.toastMsg     = msg;
+    this.toastType    = type;
+    this.toastVisible = true;
     setTimeout(() => { this.toastVisible = false; this.cdr.detectChanges(); }, 4000);
   }
 }
