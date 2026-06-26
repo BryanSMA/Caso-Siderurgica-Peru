@@ -1,18 +1,60 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { catchError, switchMap, filter, take, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { Router } from '@angular/router';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const user = localStorage.getItem('erp_user');
-  
-  if (user) {
-    const usuario = JSON.parse(user);
-    const credentials = btoa(`${usuario.username}:123456`);
-    const authReq = req.clone({
-      setHeaders: {
-        Authorization: `Basic ${credentials}`
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  const authReq = addToken(req, authService.getAccessToken());
+
+  return next(authReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401 && !req.url.includes('/login') && !req.url.includes('/auth/refresh')) {
+        return handle401(req, next, authService, router);
       }
-    });
-    return next(authReq);
-  }
-  
-  return next(req);
+      return throwError(() => error);
+    })
+  );
 };
+
+function addToken(req: HttpRequest<any>, token: string | null): HttpRequest<any> {
+  if (!token) return req;
+  return req.clone({
+    setHeaders: { Authorization: `Bearer ${token}` },
+    withCredentials: true
+  });
+}
+
+function handle401(
+  req: HttpRequest<any>,
+  next: HttpHandlerFn,
+  authService: AuthService,
+  router: Router
+) {
+  const refreshing$ = authService.refreshing$;
+
+  if (!refreshing$.getValue()) {
+    refreshing$.next(true);
+
+    return authService.refreshToken().pipe(
+      switchMap((response: any) => {
+        refreshing$.next(false);
+        return next(addToken(req, response.accessToken));
+      }),
+      catchError((err) => {
+        refreshing$.next(false);
+        authService.logout();
+        return throwError(() => err);
+      })
+    );
+  } else {
+    return refreshing$.pipe(
+      filter(isRefreshing => !isRefreshing),
+      take(1),
+      switchMap(() => next(addToken(req, authService.getAccessToken())))
+    );
+  }
+}
