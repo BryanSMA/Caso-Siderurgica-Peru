@@ -1,23 +1,20 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { DespachoService } from '../../../core/services/despacho.service';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { DespachoService, Despacho } from '../../../core/services/despacho.service';
+import { CustomValidators } from '../../../core/validators/custom-validators';
 
-export interface Despacho {
-  id?: number; codigo: string; cliente: string; direccion: string; producto: string;
-  peso: string; transportista: string;
-  estado: 'ENTREGADO' | 'ENVIADO' | 'PREPARADO' | 'PENDIENTE';
-  comprobante?: string; comprobanteValidado?: boolean; pedidoId?: number;
-}
+// ── Interfaz eliminada de aquí — ahora vive en despacho.service.ts ──
 
 @Component({
   selector: 'app-despacho',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './despacho.html',
   styles: []
 })
 export class DespachoComponent implements OnInit {
+
   despachos: Despacho[] = [];
   despachoSearch = ''; despachoFiltroEstado = '';
   showModal = false; modalMode: 'crear' | 'editar' | 'eliminar' | 'comprobante' = 'crear';
@@ -27,48 +24,80 @@ export class DespachoComponent implements OnInit {
   despachoActivo: Despacho | null = null;
   toastMsg = ''; toastType: 'success' | 'error' = 'success'; toastVisible = false;
 
-  constructor(
-  private despachoService: DespachoService,
-  private cdr: ChangeDetectorRef
-) {}
-  ngOnInit() { this.cargar(); }
-  cargar() {
-  this.despachoService.listar().subscribe((d: any) => {
-    this.despachos = d;
-    this.cdr.detectChanges();
-  });
-}
+  // ── Reactive Form ────────────────────────────────────────────────────────
+  form!: FormGroup;
 
- get despachosFiltrados(): Despacho[] {
-  return this.despachos.filter(d => {
-    const matchSearch = !this.despachoSearch ||
-      (d.cliente || '').toLowerCase().includes(this.despachoSearch.toLowerCase()) ||
-      (d.codigo || '').toLowerCase().includes(this.despachoSearch.toLowerCase());
-    return matchSearch && (!this.despachoFiltroEstado || d.estado === this.despachoFiltroEstado);
-  });
-}
+  constructor(
+    private despachoService: DespachoService,
+    private cdr: ChangeDetectorRef,
+    private fb: FormBuilder
+  ) {}
+
+  ngOnInit() { this.initForm(); this.cargar(); }
+
+  initForm() {
+    this.form = this.fb.group({
+      cliente:       ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      producto:      ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      direccion:     ['', []],
+      peso:          ['', []],
+      transportista: ['', []],
+    });
+  }
+
+  isInvalid(campo: string): boolean { return CustomValidators.showError(this.form.get(campo)); }
+  errorMsg(campo: string, label: string): string { return CustomValidators.getErrorMessage(this.form.get(campo), label); }
+
+  cargar() {
+    this.despachoService.listar().subscribe((d) => { this.despachos = d; this.cdr.detectChanges(); });
+  }
+
+  get despachosFiltrados(): Despacho[] {
+    return this.despachos.filter(d => {
+      const matchSearch = !this.despachoSearch ||
+        (d.cliente || '').toLowerCase().includes(this.despachoSearch.toLowerCase()) ||
+        (d.codigo || '').toLowerCase().includes(this.despachoSearch.toLowerCase());
+      return matchSearch && (!this.despachoFiltroEstado || d.estado === this.despachoFiltroEstado);
+    });
+  }
 
   getBadgeClass(estado: string): string {
     const map: Record<string,string> = { 'ENTREGADO':'badge-green', 'ENVIADO':'badge-blue', 'PREPARADO':'badge-yellow', 'PENDIENTE':'badge-orange' };
     return map[estado] || 'badge-yellow';
   }
 
-  openModalCrear() { this.modalMode = 'crear'; this.despachoForm = { estado: 'PENDIENTE' }; this.showModal = true; }
-  openModalEditar(d: Despacho) { this.modalMode = 'editar'; this.despachoForm = { ...d }; this.showModal = true; }
+  openModalCrear() {
+    this.modalMode = 'crear';
+    this.form.reset();
+    this.despachoForm = { estado: 'PENDIENTE' };
+    this.showModal = true;
+  }
+
+  openModalEditar(d: Despacho) {
+    this.modalMode = 'editar';
+    this.despachoForm = { ...d };
+    this.form.patchValue({
+      cliente: d.cliente, producto: d.producto,
+      direccion: d.direccion, peso: d.peso, transportista: d.transportista
+    });
+    this.showModal = true;
+  }
+
   pedirEliminar(d: Despacho) { this.modalMode = 'eliminar'; this.deleteTarget = d; this.showModal = true; }
   closeModal() { this.showModal = false; this.deleteTarget = null; this.despachoActivo = null; }
 
   guardarDespacho() {
-    if (!this.despachoForm.cliente || !this.despachoForm.producto) { this.showToast('Complete los campos requeridos','error'); return; }
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    const data = { ...this.despachoForm, ...this.form.value };
     if (this.modalMode === 'crear') {
-      this.despachoService.crear(this.despachoForm).subscribe({
+      this.despachoService.crear(data).subscribe({
         next: () => { this.showToast('Despacho registrado'); this.cargar(); this.closeModal(); },
-        error: () => this.showToast('Error al registrar','error')
+        error: () => this.showToast('Error al registrar', 'error')
       });
     } else {
-      this.despachoService.actualizar(this.despachoForm.id!, this.despachoForm).subscribe({
+      this.despachoService.actualizar(this.despachoForm.id!, data).subscribe({
         next: () => { this.showToast('Despacho actualizado'); this.cargar(); this.closeModal(); },
-        error: () => this.showToast('Error al actualizar','error')
+        error: () => this.showToast('Error al actualizar', 'error')
       });
     }
   }
@@ -77,17 +106,17 @@ export class DespachoComponent implements OnInit {
     if (!d.id) return;
     this.despachoService.preparar(d.id).subscribe({
       next: () => { this.showToast(`Guía ${d.codigo} preparada`); this.cargar(); },
-      error: err => this.showToast(err.error?.message || 'Error al preparar','error')
+      error: err => this.showToast(err.error?.message || 'Error al preparar', 'error')
     });
   }
 
   abrirComprobante(d: Despacho) { this.despachoActivo = d; this.comprobanteTexto = ''; this.modalMode = 'comprobante'; this.showModal = true; }
 
   validarComprobante() {
-    if (!this.despachoActivo?.id || !this.comprobanteTexto.trim()) { this.showToast('Ingrese un código o referencia de comprobante','error'); return; }
+    if (!this.despachoActivo?.id || !this.comprobanteTexto.trim()) { this.showToast('Ingrese un código o referencia de comprobante', 'error'); return; }
     this.despachoService.validarComprobante(this.despachoActivo.id, this.comprobanteTexto).subscribe({
       next: () => { this.showToast('Comprobante validado'); this.cargar(); this.closeModal(); },
-      error: err => this.showToast(err.error?.message || 'Error al validar comprobante','error')
+      error: err => this.showToast(err.error?.message || 'Error al validar comprobante', 'error')
     });
   }
 
@@ -95,19 +124,20 @@ export class DespachoComponent implements OnInit {
     if (!d.id) return;
     this.despachoService.confirmarEntrega(d.id).subscribe({
       next: () => { this.showToast(`Entrega confirmada: ${d.codigo}`); this.cargar(); },
-      error: err => this.showToast(err.error?.message || 'Falta validar comprobante','error')
+      error: err => this.showToast(err.error?.message || 'Falta validar comprobante', 'error')
     });
   }
 
   confirmarEliminar() {
-  if (!this.deleteTarget?.id) return;
-  this.despachoService.eliminar(this.deleteTarget.id).subscribe(() => {
-    this.despachos = this.despachos.filter(d => d !== this.deleteTarget);
-    this.cdr.detectChanges();
-    this.showToast('Despacho eliminado');
-    this.closeModal();
-  });
-}
+    if (!this.deleteTarget?.id) return;
+    this.despachoService.eliminar(this.deleteTarget.id).subscribe(() => {
+      this.despachos = this.despachos.filter(d => d !== this.deleteTarget);
+      this.cdr.detectChanges(); this.showToast('Despacho eliminado'); this.closeModal();
+    });
+  }
 
-  showToast(msg: string, type: 'success'|'error' = 'success') { this.toastMsg = msg; this.toastType = type; this.toastVisible = true; setTimeout(() => this.toastVisible = false, 3000); }
+  showToast(msg: string, type: 'success'|'error' = 'success') {
+    this.toastMsg = msg; this.toastType = type; this.toastVisible = true;
+    setTimeout(() => this.toastVisible = false, 3000);
+  }
 }
