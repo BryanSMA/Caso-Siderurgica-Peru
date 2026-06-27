@@ -64,10 +64,14 @@
         </td>
         <td>{{ p.categoria || '—' }}</td>
         <td>
-          <span [style.color]="p.stock === 0 ? '#E53E3E' : p.stock <= (p.stockMinimo||0) ? '#DD6B20' : '#38A169'"
-                style="font-weight:700">
-            {{ p.stock }} {{ p.unidad }}
-          </span>
+          <div class="stock-cell">
+            <span [style.color]="p.stock === 0 ? '#E53E3E' : p.stock <= (p.stockMinimo||0) ? '#DD6B20' : '#38A169'"
+                  style="font-weight:700">
+              {{ p.stock }} {{ p.unidad }}
+            </span>
+            <span *ngIf="p.stock === 0" class="stock-alert stock-alert--vacio" title="Sin stock">⚠</span>
+            <span *ngIf="p.stock > 0 && p.stock <= (p.stockMinimo||0)" class="stock-alert stock-alert--bajo" title="Stock bajo">↓</span>
+          </div>
         </td>
         <td>{{ p.stockMinimo }}</td>
         <td>{{ p.precioUnitario ? formatMoney(p.precioUnitario) : '—' }}</td>

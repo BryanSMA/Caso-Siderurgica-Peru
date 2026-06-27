@@ -1,0 +1,55 @@
+// ─── PEDIDOS ──────────────────────────────────────────────
+
+.table-card thead th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #4A5568;
+  background: #F8FAFC;
+  padding: 11px 22px;
+  white-space: nowrap;
+}
+
+.table-card tbody tr {
+  transition: background 0.12s;
+  &:hover { background: #F0F7FF; }
+}
+
+.select-badge {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 22px 4px 10px;
+  border-radius: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239C4221'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+
+  option { background: white; color: #2D3748; font-weight: 600; }
+}
+
+.action-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.summary-strip .val {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.summary-strip .lbl {
+  font-size: 11px;
+  color: #718096;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
