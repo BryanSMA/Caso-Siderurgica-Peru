@@ -14,43 +14,7 @@ app-footer {
   margin: 0;
   padding: 0;
 }
-// ═══════════════════════════════════════════════
-// VARIABLES
-// ═══════════════════════════════════════════════
-:root {
-  // Originales
-  --c-primary:       #1A365D;
-  --c-primary-light: #2B6CB0;
-  --c-steel:         #4A5568;
-  --c-steel-dark:    #2D3748;
-  --c-steel-light:   #A0AEC0;
-  --c-white:         #FFFFFF;
-  --c-bg-light:      #F7FAFC;
-  --c-border:        #E2E8F0;
-  --radius:          8px;
-  --transition:      all 0.3s ease;
-  --shadow:          0 10px 15px -3px rgba(0,0,0,0.1);
 
-  // Nuevos
-  --navy-950:  #020b18;
-  --navy-900:  #061224;
-  --navy-800:  #0c1e38;
-  --navy-700:  #102848;
-  --navy-600:  #163560;
-  --blue:      #2563eb;
-  --blue-light:#3b82f6;
-  --blue-pale: #60a5fa;
-  --sky:       #bfdbfe;
-  --white:     #f0f6ff;
-  --steel:     #7a9bbf;
-  --muted:     #4a6a8a;
-  --bg-section:#f4f7fc;
-
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-body:    'Inter', sans-serif;
-  --section-py:   96px;
-  --container:    1180px;
-}
 
 // ═══════════════════════════════════════════════
 // RESET / GLOBALES
@@ -66,6 +30,8 @@ html { scroll-behavior: smooth; }
 
 body {
   color: var(--c-steel-dark);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
   line-height: 1.6;
   background-color: var(--c-white);
   -webkit-font-smoothing: antialiased;
