@@ -124,3 +124,34 @@
   color: rgba(255,255,255,0.2);
   letter-spacing: 0.08em;
 }
+
+// Al final del archivo, agregar:
+
+// ─── SEPARADOR SUPERIOR FOOTER ────────────────────────────
+.footer::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(37,99,235,0.4) 30%,
+    rgba(96,165,250,0.6) 50%,
+    rgba(37,99,235,0.4) 70%,
+    transparent 100%
+  );
+}
+
+// ─── RESPONSIVE FOOTER ────────────────────────────────────
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+}
