@@ -468,3 +468,23 @@ $subtle:       #3a5570;
   padding-top: 20px;
   margin-bottom: 0;
 }
+// ─── RESPONSIVE ───────────────────────────────────────────
+@media (max-width: 480px) {
+  .login-card {
+    padding: 32px 24px 28px;
+    border-radius: 6px;
+  }
+
+  .login-brand-text h1 {
+    font-size: 18px;
+  }
+
+  .login-title {
+    font-size: 22px;
+  }
+
+  .sidebar-text,
+  .sidebar-accent {
+    display: none;
+  }
+}

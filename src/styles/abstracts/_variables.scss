@@ -11,4 +11,16 @@
     --radius: 8px;
     --transition: all 0.3s ease;
     --shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+
+    /* ── Tipografía ─────────────────────── */
+    --font-primary: 'Inter', sans-serif;
+    --font-size-base: 14px;
+    --font-size-sm: 13px;
+    --font-size-xs: 11px;
+
+    /* ── Dashboard / ERP tokens ─────────── */
+    --c-accent: #2563eb;
+    --c-accent-dim: #1a45a8;
+    --c-bg-dark: #0d1726;
+    --c-text-muted: #7a9bbf;
 }
