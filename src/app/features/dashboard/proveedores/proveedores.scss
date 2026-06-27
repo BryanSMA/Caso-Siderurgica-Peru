@@ -1,0 +1,46 @@
+// ─── PROVEEDORES ──────────────────────────────────────────
+
+.table-card thead th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #4A5568;
+  background: #F8FAFC;
+  padding: 11px 22px;
+  white-space: nowrap;
+}
+
+.table-card tbody tr {
+  transition: background 0.12s;
+  &:hover { background: #F0F7FF; }
+}
+
+// Calificación con color semántico
+.calificacion-cell {
+  font-weight: 700;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  &.cal-alta  { color: #38A169; }
+  &.cal-media { color: #D69E2E; }
+}
+
+.action-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+// Validación en formulario
+.is-invalid {
+  border-color: #E53E3E !important;
+  box-shadow: 0 0 0 3px rgba(229,62,62,0.12) !important;
+}
+
+.invalid-feedback {
+  color: #C53030;
+  font-size: 12px;
+  margin-top: 4px;
+}
