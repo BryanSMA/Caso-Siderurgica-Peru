@@ -5,6 +5,7 @@
   background: var(--navy-900);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  transition: background 0.3s;
 }
 
 .nav-content {
@@ -24,11 +25,14 @@
   font-weight: 700;
   color: var(--white);
   letter-spacing: 0.03em;
+  transition: opacity 0.15s;
 
   i {
     font-size: 22px;
     color: var(--blue-pale);
   }
+
+  &:hover { opacity: 0.85; }
 }
 
 .nav-links {
@@ -36,21 +40,46 @@
   align-items: center;
   gap: 4px;
   list-style: none;
+}
 
-  li a {
-    display: block;
-    padding: 7px 14px;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.7);
-    text-decoration: none;
-    border-radius: 6px;
-    transition: color 0.15s, background 0.15s;
+.nav-link {
+  display: block;
+  padding: 7px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.65);
+  text-decoration: none;
+  border-radius: 6px;
+  position: relative;
+  transition: color 0.15s, background 0.15s;
 
-    &:hover {
-      color: white;
-      background: rgba(255,255,255,0.07);
-    }
+  // Indicador inferior animado
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 14px;
+    right: 14px;
+    height: 2px;
+    background: var(--blue-pale);
+    border-radius: 2px;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.25s ease;
+  }
+
+  &:hover {
+    color: white;
+    background: rgba(255,255,255,0.07);
+
+    &::after { transform: scaleX(1); }
+  }
+
+  // Clase activa (agregar manualmente con JS o scroll spy)
+  &.active {
+    color: white;
+
+    &::after { transform: scaleX(1); }
   }
 }
 
@@ -74,5 +103,12 @@
     background: var(--blue);
     border-color: var(--blue);
     color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
   }
+}
+
+// ─── RESPONSIVE ───────────────────────────────
+@media (max-width: 992px) {
+  .nav-links { display: none; }
 }
