@@ -1,0 +1,66 @@
+// ─── DESPACHO ─────────────────────────────────────────────
+
+.table-card thead th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #4A5568;
+  background: #F8FAFC;
+  padding: 11px 22px;
+  white-space: nowrap;
+}
+
+.table-card tbody tr {
+  transition: background 0.12s;
+  &:hover { background: #F0F7FF; }
+}
+
+// Estado con ícono
+.despacho-estado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.despacho-icono {
+  font-size: 14px;
+  line-height: 1;
+}
+
+// Summary strip 4 columnas
+.summary-strip {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.summary-strip .val {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.summary-strip .lbl {
+  font-size: 11px;
+  color: #718096;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.action-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+// Feedback de comprobante validado
+.is-invalid {
+  border-color: #E53E3E !important;
+  box-shadow: 0 0 0 3px rgba(229,62,62,0.12) !important;
+}
+
+.invalid-feedback {
+  color: #C53030;
+  font-size: 12px;
+  margin-top: 4px;
+}

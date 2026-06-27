@@ -78,7 +78,7 @@
         <td>{{ formatMoney(+(v.igv || 0)) }}</td>
         <td><strong>{{ formatMoney(+(v.total || 0)) }}</strong></td>
         <td>{{ v.vendedor || '—' }}</td>
-        <td>{{ formatDate(v.fechaVenta) }}</td>
+        <td><span class="venta-fecha">{{ formatDate(v.fechaVenta) }}</span></td>
         <td>
           <span class="badge" [class]="getBadgeClass(v.estado || '')">{{ v.estado }}</span>
         </td>
@@ -184,7 +184,7 @@
       </div>
 
       <!-- Acciones contextuales según estado -->
-      <<div class="modal-footer">
+      <div class="modal-footer">
   <button class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
 
   <ng-container *ngIf="ventaForm.estado === 'PENDIENTE'">

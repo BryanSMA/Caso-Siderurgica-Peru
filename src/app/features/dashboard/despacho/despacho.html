@@ -29,7 +29,17 @@
         <td>{{ d.codigo }}</td>
         <td><div class="td-main">{{ d.cliente }}</div></td>
         <td>{{ d.direccion }}</td><td>{{ d.producto }}</td><td>{{ d.peso }}</td><td>{{ d.transportista }}</td>
-        <td><span class="badge" [class]="getBadgeClass(d.estado)">{{ d.estado }}</span></td>
+        <td>
+          <div class="despacho-estado">
+            <span class="despacho-icono">
+              <ng-container *ngIf="d.estado === 'PENDIENTE'">⏳</ng-container>
+              <ng-container *ngIf="d.estado === 'PREPARADO'">📦</ng-container>
+              <ng-container *ngIf="d.estado === 'ENVIADO'">🚚</ng-container>
+              <ng-container *ngIf="d.estado === 'ENTREGADO'">✅</ng-container>
+            </span>
+            <span class="badge" [class]="getBadgeClass(d.estado)">{{ d.estado }}</span>
+          </div>
+        </td>
         <td>
           <div class="action-col">
             <button class="btn btn-secondary btn-sm" *ngIf="d.estado === 'PENDIENTE'" (click)="preparar(d)">Preparar</button>
