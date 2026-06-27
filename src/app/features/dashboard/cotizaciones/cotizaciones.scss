@@ -1,0 +1,104 @@
+// ─── COTIZACIONES ─────────────────────────────────────────
+
+// Cabecera de columnas más clara
+.table-card thead th {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #4A5568;
+    background: #F8FAFC;
+    padding: 11px 22px;
+    white-space: nowrap;
+}
+
+// Hover en filas
+.table-card tbody tr {
+    transition: background 0.12s;
+    &:hover { background: #F0F7FF; }
+}
+
+// Select-badge para estado PENDIENTE
+.select-badge {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239C4221'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 22px;
+
+    option { background: white; color: #2D3748; font-weight: 600; }
+}
+
+// Badges de estado con ícono visual
+.badge {
+    white-space: nowrap;
+
+    &.badge-orange {
+    background: #FEEBC8;
+    color: #9C4221;
+    border: 1px solid #FBD38D;
+    }
+
+    &.badge-green {
+    background: #C6F6D5;
+    color: #276749;
+    border: 1px solid #9AE6B4;
+    }
+
+    &.badge-red {
+    background: #FED7D7;
+    color: #9B2C2C;
+    border: 1px solid #FEB2B2;
+    }
+
+    &.badge-blue {
+    background: #EBF8FF;
+    color: #1A365D;
+    border: 1px solid #BEE3F8;
+    }
+}
+
+// Columna acciones con gap uniforme
+.action-col {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+// Summary strip — color accent en valores
+.summary-strip .val {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.summary-strip .lbl {
+    font-size: 11px;
+    color: #718096;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+// Dropdown producto — borde azul en hover
+.producto-item:hover {
+    background: #EBF8FF;
+    border-left: 3px solid #2B6CB0;
+    padding-left: 11px;
+    transition: all 0.1s;
+}
+
+// Separador visual entre precio y stock en dropdown
+.producto-precio {
+    font-weight: 700;
+    color: #1A365D;
+}

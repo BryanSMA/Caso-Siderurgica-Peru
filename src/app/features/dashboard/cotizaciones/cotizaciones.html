@@ -54,7 +54,7 @@
         <td>{{ c.descuento_porcentaje }}%<div class="td-sub">{{ formatMoney(+c.descuento_monto!) }}</div></td>
         <td><strong>{{ formatMoney(+c.total!) }}</strong></td>
         <td>
-          <select *ngIf="c.estado === 'PENDIENTE'" class="badge badge-orange"
+          <select *ngIf="c.estado === 'PENDIENTE'" class="badge badge-orange select-badge"
                   [(ngModel)]="c.estado" (change)="cambiarEstado(c, c.estado || '')">
             <option value="PENDIENTE">⏳ PENDIENTE</option>
             <option value="APROBADA">✓ APROBADA</option>
