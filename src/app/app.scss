@@ -1,0 +1,9 @@
+// ─── APP ROOT ─────────────────────────────────────────────
+// Estilos globales mínimos del componente raíz.
+// Los estilos globales viven en src/styles.scss
+// Las variables en src/styles/abstracts/_variables.scss
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
