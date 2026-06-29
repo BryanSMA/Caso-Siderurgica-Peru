@@ -52,7 +52,7 @@ export class ReportesComponent {
   masaSalarial         = this.ds.masaSalarial;
 
   cotizaciones   = this.ds.cotizaciones;
-  cotizAprobadas = computed(() => this.ds.cotizaciones().filter(c => c.estado === 'APROBADA').length);
+  cotizAprobadas = computed(() => this.ds.cotizaciones().filter(c => c.estado === 'Aprobada').length);
   cotizTasa      = computed(() => {
     const total = this.ds.cotizaciones().length;
     return total > 0 ? Math.round((this.cotizAprobadas() / total) * 100) : 0;

@@ -70,7 +70,8 @@ export class CotizacionesComponent implements OnInit {
   initForm() {
     this.form = this.fb.group({
       cliente:         ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-      ruc:             ['', [Validators.pattern(CustomValidators.REGEX.ruc), CustomValidators.noSameDigits()]],
+      // MEJORA: usa CustomValidators.ruc() + noSameDigits() en lugar de pattern crudo
+      ruc:             ['', [CustomValidators.ruc(), CustomValidators.noSameDigits()]],
       producto:        ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       cantidad:        [1,  [Validators.required, Validators.min(1)]],
       precio_unitario: [0,  [Validators.required, Validators.min(0.01)]],
@@ -81,16 +82,22 @@ export class CotizacionesComponent implements OnInit {
     return CustomValidators.showError(this.form.get(campo));
   }
 
+  // MEJORA: errorMsg unificado — usa fieldKey para mensajes específicos de min/max/stock
   errorMsg(campo: string, label: string): string {
     const control = this.form.get(campo);
     if (!control || !control.errors || !(control.touched || control.dirty)) return '';
+
+    // Mensaje contextual de stock — específico de este campo en este módulo
     if (campo === 'cantidad' && control.errors['max']) {
-      return `Stock disponible: ${this.productoSeleccionado?.stock ?? 0} ${this.productoSeleccionado?.unidad ?? 'unidades'}`;
+      return `Stock disponible: ${this.productoSeleccionado?.stock ?? 0} ${this.productoSeleccionado?.unidad ?? 'unidades'}.`;
     }
-    if (campo === 'cantidad' && control.errors['min']) {
-      return 'La cantidad debe ser mayor a 0.';
-    }
-    return CustomValidators.getErrorMessage(control, label);
+
+    return CustomValidators.getErrorMessage(control, label, campo);
+  }
+
+  // MEJORA: helper para limpiar input de RUC (antes en proveedores solo)
+  soloNumerosRuc(event: Event) {
+    CustomValidators.soloNumerosInput(event, this.form.get('ruc'));
   }
 
   cargarInventario() {
@@ -217,7 +224,6 @@ export class CotizacionesComponent implements OnInit {
     });
   }
 
-  // CN-C07 — mensaje claro según el estado de la cotización
   convertirAPedido(c: Cotizacion) {
     if (c.estado === 'RECHAZADA') {
       this.showToast('No se puede convertir: la cotización está RECHAZADA. Debe estar APROBADA.', 'error');
@@ -241,7 +247,6 @@ export class CotizacionesComponent implements OnInit {
         this.closeModal();
       },
       error: (err) => {
-        // Mensaje del backend como fallback por si algo inesperado llega al servidor
         const msg = err.error?.error || 'Error al convertir la cotización.';
         this.showToast(msg, 'error');
         this.loadingAction = false;

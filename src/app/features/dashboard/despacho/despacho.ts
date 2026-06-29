@@ -4,8 +4,6 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { DespachoService, Despacho } from '../../../core/services/despacho.service';
 import { CustomValidators } from '../../../core/validators/custom-validators';
 
-// ── Interfaz eliminada de aquí — ahora vive en despacho.service.ts ──
-
 @Component({
   selector: 'app-despacho',
   standalone: true,
@@ -24,7 +22,6 @@ export class DespachoComponent implements OnInit {
   despachoActivo: Despacho | null = null;
   toastMsg = ''; toastType: 'success' | 'error' = 'success'; toastVisible = false;
 
-  // ── Reactive Form ────────────────────────────────────────────────────────
   form!: FormGroup;
 
   constructor(
@@ -39,14 +36,21 @@ export class DespachoComponent implements OnInit {
     this.form = this.fb.group({
       cliente:       ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       producto:      ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-      direccion:     ['', []],
-      peso:          ['', []],
-      transportista: ['', []],
+      // MEJORA: campos antes vacíos ahora tienen validación básica
+      direccion:     ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
+      peso:          ['', [Validators.required, Validators.min(0.01)]],
+      transportista: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     });
   }
 
   isInvalid(campo: string): boolean { return CustomValidators.showError(this.form.get(campo)); }
-  errorMsg(campo: string, label: string): string { return CustomValidators.getErrorMessage(this.form.get(campo), label); }
+
+  // MEJORA: pasa fieldKey para mensajes específicos de min en peso
+  errorMsg(campo: string, label: string): string {
+    const control = this.form.get(campo);
+    if (!control || !control.errors || !(control.touched || control.dirty)) return '';
+    return CustomValidators.getErrorMessage(control, label, campo);
+  }
 
   cargar() {
     this.despachoService.listar().subscribe((d) => { this.despachos = d; this.cdr.detectChanges(); });
@@ -62,7 +66,10 @@ export class DespachoComponent implements OnInit {
   }
 
   getBadgeClass(estado: string): string {
-    const map: Record<string,string> = { 'ENTREGADO':'badge-green', 'ENVIADO':'badge-blue', 'PREPARADO':'badge-yellow', 'PENDIENTE':'badge-orange' };
+    const map: Record<string,string> = {
+      'ENTREGADO': 'badge-green', 'ENVIADO': 'badge-blue',
+      'PREPARADO': 'badge-yellow', 'PENDIENTE': 'badge-orange'
+    };
     return map[estado] || 'badge-yellow';
   }
 
@@ -110,10 +117,15 @@ export class DespachoComponent implements OnInit {
     });
   }
 
-  abrirComprobante(d: Despacho) { this.despachoActivo = d; this.comprobanteTexto = ''; this.modalMode = 'comprobante'; this.showModal = true; }
+  abrirComprobante(d: Despacho) {
+    this.despachoActivo = d; this.comprobanteTexto = '';
+    this.modalMode = 'comprobante'; this.showModal = true;
+  }
 
   validarComprobante() {
-    if (!this.despachoActivo?.id || !this.comprobanteTexto.trim()) { this.showToast('Ingrese un código o referencia de comprobante', 'error'); return; }
+    if (!this.despachoActivo?.id || !this.comprobanteTexto.trim()) {
+      this.showToast('Ingrese un código o referencia de comprobante', 'error'); return;
+    }
     this.despachoService.validarComprobante(this.despachoActivo.id, this.comprobanteTexto).subscribe({
       next: () => { this.showToast('Comprobante validado'); this.cargar(); this.closeModal(); },
       error: err => this.showToast(err.error?.message || 'Error al validar comprobante', 'error')

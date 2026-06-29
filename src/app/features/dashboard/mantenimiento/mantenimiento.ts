@@ -15,18 +15,31 @@ export class MantenimientoComponent implements OnInit {
 
   usuariosSistema: Usuario[] = [];
   loadingUsuarios = false;
-  showModal       = false;
+  showModal         = false;
   showModalEliminar = false;
   modalMode: 'crear' | 'editar' = 'crear';
-  guardando   = false;
-  eliminando  = false;
+  guardando  = false;
+  eliminando = false;
 
-  // Usuario activo en edición o eliminación
   private usuarioActivo: Usuario | null = null;
 
   toastMsg = ''; toastType: 'success' | 'error' | 'info' = 'success'; toastVisible = false;
 
   form!: FormGroup;
+
+  // MEJORA: validators de password centralizados como constante de clase
+  private readonly PASSWORD_VALIDATORS_REQUERIDO = [
+    Validators.required,
+    Validators.minLength(8),
+    Validators.maxLength(20),
+    Validators.pattern(CustomValidators.REGEX.password),
+  ];
+
+  private readonly PASSWORD_VALIDATORS_OPCIONAL = [
+    Validators.minLength(8),
+    Validators.maxLength(20),
+    Validators.pattern(CustomValidators.REGEX.password),
+  ];
 
   constructor(
     private usuarioService: UsuarioService,
@@ -39,27 +52,24 @@ export class MantenimientoComponent implements OnInit {
   initForm() {
     this.form = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
-      password: ['', [
-        Validators.required,
-        Validators.minLength(8),
-        Validators.maxLength(20),
-        Validators.pattern(CustomValidators.REGEX.password),
-      ]],
-      rolId: [1, Validators.required],
+      // Password arranca requerida (modo crear por defecto)
+      password: ['', this.PASSWORD_VALIDATORS_REQUERIDO],
+      rolId:    [1, Validators.required],
     });
   }
 
-  // ── Helpers template ──────────────────────────────────────────────────────
   isInvalid(campo: string): boolean { return CustomValidators.showError(this.form.get(campo)); }
-  errorMsg(campo: string, label: string): string { return CustomValidators.getErrorMessage(this.form.get(campo), label); }
 
-  // Nombre legible del rol para el select
+  // MEJORA: fieldKey='password' para mensaje específico de complejidad
+  errorMsg(campo: string, label: string): string {
+    return CustomValidators.getErrorMessage(this.form.get(campo), label, campo);
+  }
+
   getRolNombre(rolId: number): string {
     const roles: Record<number, string> = { 1: 'ADMIN', 2: 'VENTAS', 3: 'ALMACEN', 4: 'RRHH' };
     return roles[rolId] || String(rolId);
   }
 
-  // ── Cargar ────────────────────────────────────────────────────────────────
   cargarUsuarios() {
     this.loadingUsuarios = true;
     this.usuarioService.listarUsuarios().subscribe({
@@ -75,42 +85,30 @@ export class MantenimientoComponent implements OnInit {
     });
   }
 
-  // ── Crear ─────────────────────────────────────────────────────────────────
   openModalCrear() {
-    this.modalMode      = 'crear';
-    this.usuarioActivo  = null;
+    this.modalMode     = 'crear';
+    this.usuarioActivo = null;
     this.form.reset({ rolId: 1 });
-    // Password obligatoria al crear
-    this.form.get('password')?.setValidators([
-      Validators.required,
-      Validators.minLength(8),
-      Validators.maxLength(20),
-      Validators.pattern(CustomValidators.REGEX.password),
-    ]);
+    // MEJORA: ya no duplica validators — usa la constante definida arriba
+    this.form.get('password')?.setValidators(this.PASSWORD_VALIDATORS_REQUERIDO);
     this.form.get('password')?.updateValueAndValidity();
     this.showModal = true;
   }
 
-  // ── Editar ────────────────────────────────────────────────────────────────
   openModalEditar(u: Usuario) {
     this.modalMode     = 'editar';
-    this.usuarioActivo = u;   // ← guardamos el usuario a editar
+    this.usuarioActivo = u;
     this.form.patchValue({
       username: u.username,
       password: '',
-      rolId: u.rol?.id ?? 1,
+      rolId:    u.rol?.id ?? 1,
     });
     // Password opcional al editar — solo se envía si se escribe algo
-    this.form.get('password')?.setValidators([
-      Validators.minLength(8),
-      Validators.maxLength(20),
-      Validators.pattern(CustomValidators.REGEX.password),
-    ]);
+    this.form.get('password')?.setValidators(this.PASSWORD_VALIDATORS_OPCIONAL);
     this.form.get('password')?.updateValueAndValidity();
     this.showModal = true;
   }
 
-  // ── Eliminar ──────────────────────────────────────────────────────────────
   pedirEliminar(u: Usuario) {
     this.usuarioActivo    = u;
     this.showModalEliminar = true;
@@ -121,7 +119,7 @@ export class MantenimientoComponent implements OnInit {
     this.eliminando = true;
     this.usuarioService.eliminarUsuario(this.usuarioActivo.id).subscribe({
       next: () => {
-        this.eliminando       = false;
+        this.eliminando        = false;
         this.showModalEliminar = false;
         this.showToast(`✅ Usuario "${this.usuarioActivo?.username}" eliminado`, 'success');
         this.usuarioActivo = null;
@@ -135,12 +133,11 @@ export class MantenimientoComponent implements OnInit {
   }
 
   closeModal() {
-    this.showModal        = false;
+    this.showModal         = false;
     this.showModalEliminar = false;
-    this.usuarioActivo    = null;
+    this.usuarioActivo     = null;
   }
 
-  // ── Guardar (crear o editar según modalMode) ──────────────────────────────
   guardarUsuario() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.guardando = true;
@@ -158,9 +155,7 @@ export class MantenimientoComponent implements OnInit {
           this.showToast(err.error?.message || 'Error al crear usuario', 'error');
         }
       });
-
     } else {
-      // Editar — solo envía password si se escribió algo
       const { username, password, rolId } = this.form.value;
       this.usuarioService.editarUsuario(this.usuarioActivo!.id!, {
         username,
@@ -181,8 +176,6 @@ export class MantenimientoComponent implements OnInit {
     }
   }
 
-  // ── Utilidades ────────────────────────────────────────────────────────────
-  // Nombre del usuario activo para el modal de confirmación
   get nombreUsuarioActivo(): string { return this.usuarioActivo?.username || ''; }
 
   getBadgeClass(estado: string): string { return estado === 'Activo' ? 'badge-green' : 'badge-red'; }

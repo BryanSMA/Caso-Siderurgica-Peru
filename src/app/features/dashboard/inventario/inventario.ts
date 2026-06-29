@@ -31,7 +31,6 @@ export class InventarioComponent implements OnInit {
   toastVisible = false;
   rolActual: string | null = null;
 
-  // ── Reactive Form ────────────────────────────────────────────────────────
   form!: FormGroup;
 
   constructor(
@@ -49,30 +48,28 @@ export class InventarioComponent implements OnInit {
     this.cargarValorTotal();
   }
 
-  // ── Inicializar formulario ───────────────────────────────────────────────
   initForm() {
     this.form = this.fb.group({
-      producto:      ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-      categoria:     ['', [Validators.maxLength(60)]],
-      unidad:        ['unidad', [Validators.required, Validators.maxLength(30)]],
-      stock:         [0,  [Validators.required, Validators.min(0)]],
-      stockMinimo:   [10, [Validators.required, Validators.min(0)]],
-      precioUnitario:[0,  [Validators.required, Validators.min(0.01)]],
+      producto:       ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      categoria:      ['', [Validators.maxLength(60)]],
+      unidad:         ['unidad', [Validators.required, Validators.maxLength(30)]],
+      stock:          [0,  [Validators.required, Validators.min(0)]],
+      stockMinimo:    [10, [Validators.required, Validators.min(0)]],
+      precioUnitario: [0,  [Validators.required, Validators.min(0.01)]],
     });
   }
 
-  // ── Helpers de validación ────────────────────────────────────────────────
   isInvalid(campo: string): boolean {
     return CustomValidators.showError(this.form.get(campo));
   }
 
+  // MEJORA: pasa fieldKey — getErrorMessage ahora distingue min(0) de min(0.01)
   errorMsg(campo: string, label: string): string {
     const control = this.form.get(campo);
     if (!control || !control.errors || !(control.touched || control.dirty)) return '';
-    return CustomValidators.getErrorMessage(control, label);
+    return CustomValidators.getErrorMessage(control, label, campo);
   }
 
-  // ── Carga de datos ───────────────────────────────────────────────────────
   cargarInventario() {
     this.loadingInventario = true;
     this.inventarioService.listarInventario().subscribe({
@@ -106,7 +103,6 @@ export class InventarioComponent implements OnInit {
     return this.rolActual === 'ADMIN' || this.rolActual === 'ALMACEN';
   }
 
-  // ── Modal ────────────────────────────────────────────────────────────────
   openModalCrear() {
     this.modalMode = 'crear';
     this.form.reset({ stock: 0, stockMinimo: 10, precioUnitario: 0, unidad: 'unidad' });
@@ -133,7 +129,6 @@ export class InventarioComponent implements OnInit {
     this.inventarioForm = {};
   }
 
-  // ── Guardar ──────────────────────────────────────────────────────────────
   guardarInventario() {
     this.form.markAllAsTouched();
     if (this.form.invalid) {
@@ -157,9 +152,7 @@ export class InventarioComponent implements OnInit {
           this.guardando = false;
           this.closeModal();
           this.showToast('✅ Producto agregado correctamente', 'success');
-          this.cargarInventario();
-          this.cargarAlertas();
-          this.cargarValorTotal();
+          this.cargarInventario(); this.cargarAlertas(); this.cargarValorTotal();
         },
         error: () => { this.guardando = false; this.showToast('Error al agregar producto', 'error'); }
       });
@@ -169,16 +162,13 @@ export class InventarioComponent implements OnInit {
           this.guardando = false;
           this.closeModal();
           this.showToast('✅ Producto actualizado correctamente', 'success');
-          this.cargarInventario();
-          this.cargarAlertas();
-          this.cargarValorTotal();
+          this.cargarInventario(); this.cargarAlertas(); this.cargarValorTotal();
         },
         error: () => { this.guardando = false; this.showToast('Error al actualizar producto', 'error'); }
       });
     }
   }
 
-  // ── Filtros ──────────────────────────────────────────────────────────────
   get inventarioBDFiltrado(): InventarioBD[] {
     return this.inventarioBD.filter(p => {
       const search = this.inventarioSearch.toLowerCase();

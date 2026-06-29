@@ -29,7 +29,6 @@
   overflow-y: auto;
   position: relative;
   z-index: 100;
-  box-shadow: 4px 0 16px rgba(0,0,0,0.15);
 
   &::after {
     content: '';
@@ -57,8 +56,6 @@
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  transition: background 0.2s; // ← agregar
-  &:hover { background: #3182CE; } // ← agregar
 
   svg { width: 20px; height: 20px; }
 }
@@ -197,14 +194,9 @@
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   position: relative;
-  transition: all 0.15s; 
 
   svg { width: 16px; height: 16px; color: #4A5568; }
-  &:hover { 
-    background: #EBF4FF;          
-    border-color: #BEE3F8;        
-    svg { color: #2B6CB0; }       
-  }
+  &:hover { background: #E2E8F0; }
 }
 
 .notif-dot {
@@ -929,17 +921,4 @@ td {
   border-top: 1px solid #EDF2F7;
   display: flex;
   justify-content: flex-end;
-  // ─── SIDEBAR SCROLLBAR PERSONALIZADO ──────────────
-  .sidebar-nav::-webkit-scrollbar { width: 3px; }
-  .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
-  .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
-
-  // ─── METRIC CARD HOVER MEJORADO ───────────────────
-  .metric-card {
-    &:hover {
-      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-      transform: translateY(-1px);
-    }
-    transition: box-shadow 0.2s, transform 0.2s; // asegurar transition completa
-  }
 }

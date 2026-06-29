@@ -69,7 +69,8 @@ export class PedidosComponent implements OnInit {
   initForm() {
     this.form = this.fb.group({
       cliente:         ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-      ruc:             ['', [Validators.pattern(CustomValidators.REGEX.ruc), CustomValidators.noSameDigits()]],
+      // MEJORA: usa CustomValidators.ruc() en lugar de pattern crudo
+      ruc:             ['', [CustomValidators.ruc(), CustomValidators.noSameDigits()]],
       producto:        ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       cantidad:        [1,  [Validators.required, Validators.min(1)]],
       precio_unitario: [0,  [Validators.required, Validators.min(0.01)]],
@@ -80,16 +81,21 @@ export class PedidosComponent implements OnInit {
     return CustomValidators.showError(this.form.get(campo));
   }
 
+  // MEJORA: errorMsg unificado — mensaje de stock sigue siendo contextual
   errorMsg(campo: string, label: string): string {
     const control = this.form.get(campo);
     if (!control || !control.errors || !(control.touched || control.dirty)) return '';
+
     if (campo === 'cantidad' && control.errors['max']) {
-      return `Stock disponible: ${this.productoSeleccionado?.stock ?? 0} ${this.productoSeleccionado?.unidad ?? 'unidades'}`;
+      return `Stock disponible: ${this.productoSeleccionado?.stock ?? 0} ${this.productoSeleccionado?.unidad ?? 'unidades'}.`;
     }
-    if (campo === 'cantidad' && control.errors['min']) {
-      return 'La cantidad debe ser mayor a 0.';
-    }
-    return CustomValidators.getErrorMessage(control, label);
+
+    return CustomValidators.getErrorMessage(control, label, campo);
+  }
+
+  // MEJORA: helper centralizado para limpiar RUC
+  soloNumerosRuc(event: Event) {
+    CustomValidators.soloNumerosInput(event, this.form.get('ruc'));
   }
 
   cargarInventario() {
@@ -207,20 +213,14 @@ export class PedidosComponent implements OnInit {
     });
   }
 
-  // CN-P03 + DEF-09 — stock insuficiente y alerta bajo stock con mensajes claros
   cambiarEstado(p: Pedido, estado: string) {
     this.loadingAction = true;
     this.http.patch<any>(`${this.API}/pedidos/${p.id}/estado`, { estado }).subscribe({
       next: (res) => {
         const pedidoActualizado: Pedido = res.pedido || res;
         if (res.warning) {
-          // Producto no encontrado en inventario
-          this.showToast(
-            `Pedido ${pedidoActualizado.codigo} ${estado}. ⚠️ ${res.warning}`,
-            'info'
-          );
+          this.showToast(`Pedido ${pedidoActualizado.codigo} ${estado}. ⚠️ ${res.warning}`, 'info');
         } else if (estado === 'APROBADO') {
-          // DEF-09 — alerta de bajo stock visible claramente
           if (res.bajoPstock) {
             this.showToast(
               `✅ Pedido ${pedidoActualizado.codigo} aprobado. ⚠️ Stock de "${p.producto}" quedó por debajo del mínimo.`,
@@ -240,7 +240,6 @@ export class PedidosComponent implements OnInit {
         this.loadingAction = false;
       },
       error: (err) => {
-        // CN-P03 — ahora el backend retorna 400 con mensaje legible
         const msg = err.error?.error || 'Error al cambiar el estado del pedido.';
         this.showToast(`❌ ${msg}`, 'error');
         this.cargarPedidos();

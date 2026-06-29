@@ -25,7 +25,7 @@ function capitalizarTexto(texto: string): string {
 @Component({
   selector: 'app-rrhh',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],  // ← agregado
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './rrhh.html',
   styles: []
 })
@@ -59,39 +59,42 @@ export class RrhhComponent implements OnInit {
   toastMsg = ''; toastType: 'success' | 'error' | 'info' = 'success'; toastVisible = false;
   dropdownAsistenciaAbierto: string | null = null;
 
-  // ── Reactive Form — solo modal crear/editar empleado ──────────────────────
   form!: FormGroup;
 
   constructor(
     private rrhhService: RrhhService,
     private cdr: ChangeDetectorRef,
-    private fb: FormBuilder                // ← agregado
+    private fb: FormBuilder
   ) {}
 
   ngOnInit() {
-    this.initForm();                       // ← agregado
+    this.initForm();
     this.cargarDatos();
     this.cargarResumenIncidencias();
     this.cargarIncidenciasPersonal();
     this.cargarHoraEntradaGeneral();
   }
 
-  // ── Form init ─────────────────────────────────────────────────────────────
   initForm() {
     this.form = this.fb.group({
-      nombre:           ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
-      cargo:            ['', []],
-      area:             ['Planta', []],
-      horaEntradaEditar:['', []],          // solo visible en modo editar
-      observacion:      ['', []],          // solo visible en modo editar
+      nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+      // MEJORA: cargo y area ahora tienen validación básica
+      cargo:  ['', [Validators.maxLength(60)]],
+      area:   ['Planta', [Validators.required, Validators.maxLength(50)]],
+      // MEJORA: horaEntradaEditar valida formato HH:MM con el nuevo validator
+      horaEntradaEditar: ['', [CustomValidators.horaValida()]],
+      // observacion: campo libre, solo límite de longitud
+      observacion: ['', [Validators.maxLength(300)]],
     });
   }
 
-  // ── Helpers template ──────────────────────────────────────────────────────
   isInvalid(campo: string): boolean { return CustomValidators.showError(this.form.get(campo)); }
-  errorMsg(campo: string, label: string): string { return CustomValidators.getErrorMessage(this.form.get(campo), label); }
 
-  // ── Modales empleado ──────────────────────────────────────────────────────
+  // MEJORA: fieldKey para horaEntradaEditar
+  errorMsg(campo: string, label: string): string {
+    return CustomValidators.getErrorMessage(this.form.get(campo), label, campo);
+  }
+
   openModalCrear() {
     this.modalMode = 'crear';
     this.empleadoForm = {};
@@ -104,11 +107,11 @@ export class RrhhComponent implements OnInit {
     const horaActual = e.horaEntrada !== '—' ? e.horaEntrada : '';
     this.empleadoForm = { ...e, horaEntradaEditar: horaActual };
     this.form.patchValue({
-      nombre: e.nombre,
-      cargo: e.cargo,
-      area: e.area,
+      nombre:            e.nombre,
+      cargo:             e.cargo,
+      area:              e.area,
       horaEntradaEditar: horaActual,
-      observacion: e.observacion !== '—' ? e.observacion : '',
+      observacion:       e.observacion !== '—' ? e.observacion : '',
     });
     this.showModal = true;
   }
@@ -124,8 +127,8 @@ export class RrhhComponent implements OnInit {
     if (this.modalMode === 'crear') {
       this.rrhhService.crearEmpleado({
         nombre: v.nombre,
-        cargo: v.cargo,
-        area: v.area,
+        cargo:  v.cargo,
+        area:   v.area,
       }).subscribe({
         next: () => {
           this.showToast('Empleado registrado');
@@ -139,14 +142,12 @@ export class RrhhComponent implements OnInit {
       return;
     }
 
-    // Modo editar — usa empleadoForm para los ids (asistenciaId, empleadoId)
     this.rrhhService.actualizarEmpleado(this.empleadoForm.empleadoId!, {
       nombre: v.nombre,
-      cargo: v.cargo,
-      area: v.area,
+      cargo:  v.cargo,
+      area:   v.area,
     }).subscribe({
       next: () => {
-        // reutilizamos empleadoForm para pasar horaEntradaEditar y observacion
         this.empleadoForm.horaEntradaEditar = v.horaEntradaEditar;
         this.empleadoForm.observacion = v.observacion;
         this.guardarHoraEntradaSiAplica();
@@ -158,19 +159,17 @@ export class RrhhComponent implements OnInit {
     });
   }
 
-  // ── Todo lo demás sin cambios ─────────────────────────────────────────────
-
   toggleDropdownAsistencia(empleadoId: string, event: MouseEvent) {
     event.stopPropagation();
     this.dropdownAsistenciaAbierto = this.dropdownAsistenciaAbierto === empleadoId ? null : empleadoId;
-    this.cdr.markForCheck(); // ← ¡Esta es la línea clave que faltaba!
+    this.cdr.markForCheck();
   }
 
   @HostListener('document:click')
-  cerrarDropdownsAlClickFuera() { 
+  cerrarDropdownsAlClickFuera() {
     if (this.dropdownAsistenciaAbierto !== null) {
-      this.dropdownAsistenciaAbierto = null; 
-      this.cdr.markForCheck(); // ← También hay que avisar cuando se cierra
+      this.dropdownAsistenciaAbierto = null;
+      this.cdr.markForCheck();
     }
   }
 
@@ -186,6 +185,10 @@ export class RrhhComponent implements OnInit {
 
   guardarHoraEntradaGeneral() {
     if (!this.horaEntradaEditTemp) { this.showToast('Indique una hora válida', 'error'); return; }
+    // MEJORA: valida formato antes de llamar al servicio
+    if (!CustomValidators.REGEX.hora.test(this.horaEntradaEditTemp)) {
+      this.showToast('Formato de hora inválido. Use HH:MM (ej. 08:30)', 'error'); return;
+    }
     this.rrhhService.actualizarHoraEntradaGeneral(this.horaEntradaEditTemp).subscribe({
       next: () => {
         this.horaEntradaEstablecida = this.horaEntradaEditTemp;
@@ -224,7 +227,7 @@ export class RrhhComponent implements OnInit {
   private combinar(e: EmpleadoBackend, asistencia: AsistenciaBackend | undefined, idx: number): Empleado {
     return {
       id: e.codigo || `EMP-${e.id}`, empleadoId: e.id!, asistenciaId: asistencia?.id ?? null,
-      iniciales: (e.nombre || '').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+      iniciales: (e.nombre || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase(),
       color: COLORES[idx % COLORES.length], nombre: e.nombre, cargo: e.cargo || '—', area: e.area || '—',
       horaEntrada: asistencia?.horaEntrada || '—',
       tardanza: asistencia?.minutosTardanza ? `${asistencia.minutosTardanza} min` : '—',
@@ -242,38 +245,29 @@ export class RrhhComponent implements OnInit {
 
   private guardarHoraEntradaSiAplica() {
     const asistenciaId = this.empleadoForm.asistenciaId;
-    const empleadoId = this.empleadoForm.empleadoId!;
+    const empleadoId   = this.empleadoForm.empleadoId!;
     const hora = this.empleadoForm.horaEntradaEditar;
-    const obs = this.empleadoForm.observacion;
+    const obs  = this.empleadoForm.observacion;
 
-    // Si no hay hora, simplemente cierra (es como un Ausente sin marcar)
     if (!hora && !obs) {
       this.showToast('Empleado actualizado');
-      this.cargarDatos(); 
-      this.closeModal(); 
-      this.cdr.markForCheck(); 
-      return;
+      this.cargarDatos(); this.closeModal(); this.cdr.markForCheck(); return;
     }
 
     const cb = {
-      next: () => { 
-        this.showToast('Empleado y asistencia actualizados'); 
-        this.cargarDatos(); 
-        this.closeModal(); 
-        this.cdr.markForCheck(); 
+      next: () => {
+        this.showToast('Empleado y asistencia actualizados');
+        this.cargarDatos(); this.closeModal(); this.cdr.markForCheck();
       },
-      error: (err: any) => { 
-        this.showToast(err.error?.mensaje || 'Error al actualizar la asistencia', 'error'); 
-        this.cdr.markForCheck(); 
+      error: (err: any) => {
+        this.showToast(err.error?.mensaje || 'Error al actualizar la asistencia', 'error');
+        this.cdr.markForCheck();
       }
     };
 
-    // Si ya existía un registro de asistencia hoy, lo corregimos
     if (asistenciaId) {
       this.rrhhService.corregirHoraEntrada(asistenciaId, hora, obs).subscribe(cb);
-    } 
-    // Si no existía, lo creamos registrando la asistencia
-    else {
+    } else {
       this.rrhhService.registrarAsistencia(empleadoId, hora, obs).subscribe(cb);
     }
   }
@@ -337,7 +331,10 @@ export class RrhhComponent implements OnInit {
   estaActualizandoAsistencia(empleadoId: number): boolean { return this.empleadosActualizandoAsistencia.has(empleadoId); }
 
   getBadgeClass(estado: string): string {
-    const map: Record<string, string> = { 'Presente': 'badge-green', 'Tardanza': 'badge-yellow', 'Ausente': 'badge-red', 'Sin marcar': 'badge-gray' };
+    const map: Record<string, string> = {
+      'Presente': 'badge-green', 'Tardanza': 'badge-yellow',
+      'Ausente': 'badge-red',   'Sin marcar': 'badge-gray'
+    };
     return map[estado] || 'badge-gray';
   }
 

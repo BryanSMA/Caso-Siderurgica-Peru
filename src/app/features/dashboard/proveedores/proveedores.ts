@@ -16,11 +16,10 @@ export class ProveedoresComponent implements OnInit {
   proveedores: Proveedor[] = [];
   provSearch = ''; provFiltroEstado = '';
   showModal = false; modalMode: 'crear' | 'editar' | 'ver' | 'eliminar' = 'crear';
-  proveedorForm: Partial<Proveedor> = {};   // sigue usándose para 'ver' y 'eliminar'
+  proveedorForm: Partial<Proveedor> = {};
   deleteTarget: Proveedor | null = null;
   toastMsg = ''; toastType: 'success' | 'error' | 'info' = 'success'; toastVisible = false;
 
-  // ── Reactive Form (solo para crear/editar) ──────────────────────────────
   form!: FormGroup;
 
   constructor(
@@ -36,13 +35,15 @@ export class ProveedoresComponent implements OnInit {
       nombre:       ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       ruc:          ['', [
         Validators.required,
-        Validators.pattern(CustomValidators.REGEX.ruc),   // exactamente 11 dígitos
+        // MEJORA: usa CustomValidators.ruc() en lugar de Validators.pattern(REGEX.ruc)
+        CustomValidators.ruc(),
         CustomValidators.noSameDigits(),
       ]],
       origen:       ['', []],
       contacto:     ['', []],
       telefono:     ['', [
-        Validators.pattern(CustomValidators.REGEX.telefono),  // 9 dígitos
+        // MEJORA: usa CustomValidators.telefono() en lugar de Validators.pattern(REGEX.telefono)
+        CustomValidators.telefono(),
         CustomValidators.noSameDigits(),
       ]],
       categoria:    ['', []],
@@ -51,22 +52,20 @@ export class ProveedoresComponent implements OnInit {
     });
   }
 
-  // ── Helpers para el template ────────────────────────────────────────────
   isInvalid(campo: string): boolean {
     return CustomValidators.showError(this.form.get(campo));
   }
 
+  // MEJORA: pasa fieldKey para mensajes específicos de ruc/telefono
   errorMsg(campo: string, label: string): string {
-    return CustomValidators.getErrorMessage(this.form.get(campo), label);
+    return CustomValidators.getErrorMessage(this.form.get(campo), label, campo);
   }
 
+  // MEJORA: usa el helper centralizado de CustomValidators en lugar de método local
   soloNumeros(event: Event, campo: string) {
-    const input = event.target as HTMLInputElement;
-    input.value = input.value.replace(/[^0-9]/g, '');
-    this.form.get(campo)?.setValue(input.value, { emitEvent: true });
+    CustomValidators.soloNumerosInput(event, this.form.get(campo));
   }
 
-  // ── Lógica existente (sin cambios) ─────────────────────────────────────
   cargar() {
     this.proveedorService.listar().subscribe({
       next: p => { this.proveedores = p; this.cdr.detectChanges(); },
@@ -111,7 +110,6 @@ export class ProveedoresComponent implements OnInit {
 
   guardarProveedor() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-
     const data = { ...this.proveedorForm, ...this.form.value } as Proveedor;
 
     if (this.modalMode === 'crear') {

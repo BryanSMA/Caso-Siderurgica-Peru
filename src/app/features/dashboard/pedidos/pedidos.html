@@ -68,7 +68,7 @@
         <td><strong>{{ formatMoney(+p.total!) }}</strong></td>
         <td>
           <select *ngIf="p.estado === 'PENDIENTE'"
-                  class="badge badge-orange select-badge"
+                  class="badge badge-orange"
                   [(ngModel)]="p.estado"
                   [disabled]="loadingAction"
                   (change)="cambiarEstado(p, p.estado || '')">

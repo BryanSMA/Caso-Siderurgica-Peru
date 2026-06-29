@@ -11,8 +11,6 @@ import { ProveedorService, Proveedor } from '../../../core/services/proveedor.se
 import { InventarioService, Inventario } from '../../../core/services/inventario.service';
 import { CustomValidators } from '../../../core/validators/custom-validators';
 
-// OrdenCompra ya NO se define aquí — viene del service ↑
-
 @Component({
   selector: 'app-abastecimiento',
   standalone: true,
@@ -61,14 +59,22 @@ export class AbastecimientoComponent implements OnInit {
     this.form = this.fb.group({
       proveedorId:  [null, Validators.required],
       producto:     ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
-      cantidad:     ['', []],
+      // MEJORA: cantidad ahora tiene validación mínima; el máximo se ajusta dinámicamente si hay stock
+      cantidad:     ['', [Validators.required, Validators.min(1)]],
       total:        [null, [Validators.required, Validators.min(0.01)]],
-      fechaEntrega: ['', []],
+      // MEJORA: fechaEntrega es obligatoria y debe ser una fecha futura o actual
+      fechaEntrega: ['', [Validators.required]],
     });
   }
 
+  // MEJORA: errorMsg ahora usa fieldKey para mensajes específicos
   isInvalid(campo: string): boolean { return CustomValidators.showError(this.form.get(campo)); }
-  errorMsg(campo: string, label: string): string { return CustomValidators.getErrorMessage(this.form.get(campo), label); }
+
+  errorMsg(campo: string, label: string): string {
+    const control = this.form.get(campo);
+    if (!control || !control.errors || !(control.touched || control.dirty)) return '';
+    return CustomValidators.getErrorMessage(control, label, campo);
+  }
 
   cargarOrdenes() {
     this.abastService.listarOrdenes().subscribe(o => { this.ordenes = o; this.cdr.detectChanges(); });
